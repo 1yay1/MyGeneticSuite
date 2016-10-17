@@ -38,7 +38,6 @@ public class Main {
         for(int i: bestGene) {
             bestPath.add(SalesmanPopulation.CITY_HASH_MAP.get(i).getX(), SalesmanPopulation.CITY_HASH_MAP.get(i).getY());
         }
-        bestPath.add(SalesmanPopulation.CITY_HASH_MAP.get(0).getX(),SalesmanPopulation.CITY_HASH_MAP.get(0).getY());
 
         final XYSeriesCollection fitnessDataset = new XYSeriesCollection();
         fitnessDataset.addSeries(averageFitnessXySeries);
@@ -74,8 +73,8 @@ public class Main {
         p.setRenderer(0,renderer);
 
         try {
-            ChartUtilities.saveChartAsPNG(new File("fitnessData.png"), jFreeChart, 1024, 720);
-            ChartUtilities.saveChartAsPNG( new File("bestPath.png"), pathJFreeChart, 1000, 1000);
+            ChartUtilities.saveChartAsPNG(new File("fitnessData.png"), jFreeChart, 640, 480);
+            ChartUtilities.saveChartAsPNG( new File("bestPath.png"), pathJFreeChart, 480, 480);
         } catch (IOException e) {
 
         }
