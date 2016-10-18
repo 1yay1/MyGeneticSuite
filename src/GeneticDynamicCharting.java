@@ -47,8 +47,8 @@ public class GeneticDynamicCharting {
         dataset.addSeries(minFitnessSeries);
         dataset.addSeries(maxFitnessSeries);
         dataset.addSeries(averageFitnessSeries);
-        
-        new Timer(1, new ActionListener() {
+
+        new Timer(0, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ChromosomeData cd = getChromosomeData();

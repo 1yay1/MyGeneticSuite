@@ -24,7 +24,7 @@ public class SalesmanPopulation extends Population {
      * Population size is 100, mutationRate 0.01f, crossoverRate 0.85f and elistimRate 0.03f.
      */
     public SalesmanPopulation() {
-        this("SalesmanDefault", 8, 250, 0.03f, 0.85f, 0.05f);
+        this("SalesmanDefault", 8, 250, 0.03f, 0.85f, 0.03f);
     }
 
     /**
