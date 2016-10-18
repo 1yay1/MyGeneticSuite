@@ -8,8 +8,8 @@ import java.util.List;
 public class City {
     public final static int MIN_X = 0;
     public final static int MIN_Y = 0;
-    public final static int MAX_X = 1000;
-    public final static int MAX_Y = 1000;
+    public final static int MAX_X = 100000;
+    public final static int MAX_Y = 100000;
     private final String CoordinatesOutOfBoundsString = "Coordinates are out of bounds.";
     private final int x;
     private final int y;

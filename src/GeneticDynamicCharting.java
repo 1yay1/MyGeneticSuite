@@ -20,26 +20,18 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-/**
- * @see http://stackoverflow.com/a/15715096/230513
- * @see http://stackoverflow.com/a/11949899/230513
- */
 public class GeneticDynamicCharting {
-
-
     ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue;
-    private static final int N = 128;
     private static final Random random = new Random();
-    private int n = 1;
 
     public GeneticDynamicCharting(ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
         this.sharedBlockingQueue = sharedBlockingQueue;
     }
 
     private void display() {
-        JFrame f = new JFrame("TabChart");
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JFrame f = new JFrame("Genetic Chart");
         final JPanel jtp = new JPanel();
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jtp.add(createPane());
         f.add(jtp, BorderLayout.CENTER);
         f.pack();
@@ -48,14 +40,23 @@ public class GeneticDynamicCharting {
     }
 
     private ChartPanel createPane() {
-        final XYSeries series = new XYSeries("Salesman MinFitness");
-
-        XYSeriesCollection dataset = new XYSeriesCollection(series);
-        new Timer(0, new ActionListener() {
-
+        final XYSeries minFitnessSeries = new XYSeries("Salesman MinFitness");
+        final XYSeries maxFitnessSeries = new XYSeries("Salesman MaxFitness");
+        final XYSeries averageFitnessSeries = new XYSeries("Salesman AverageFitness");
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(minFitnessSeries);
+        dataset.addSeries(maxFitnessSeries);
+        dataset.addSeries(averageFitnessSeries);
+        
+        new Timer(1, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                series.add((int) series.getItemCount(), getMinFitness());
+                ChromosomeData cd = getChromosomeData();
+                minFitnessSeries.add((int) minFitnessSeries.getItemCount(), cd.getMinFitnessValue());
+                maxFitnessSeries.add((int) maxFitnessSeries.getItemCount(), cd.getMaxFitnessValue());
+                averageFitnessSeries.add((int) averageFitnessSeries.getItemCount(), cd.getAverageFitness());
+
+                Chromosome fittest = cd.getMinFittest();
             }
         }).start();
         JFreeChart chart = ChartFactory.createXYLineChart("SalesmanPath", "X",
@@ -63,22 +64,22 @@ public class GeneticDynamicCharting {
         return new ChartPanel(chart) {
             @Override
             public Dimension getPreferredSize() {
-                return new Dimension(480, 240);
+                return new Dimension(720, 480);
             }
         };
     }
 
-    private double getMinFitness() {
+    private ChromosomeData getChromosomeData() {
         ChromosomeData chromosomeData = sharedBlockingQueue.poll();
         if(chromosomeData == null) {
             try {
                 Thread.sleep(1);
-                return getMinFitness();
+                return getChromosomeData();
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
             }
         }
-        return chromosomeData.getMinFitnessValue();
+        return chromosomeData;
     }
 
     public static void main(String[] args) {
