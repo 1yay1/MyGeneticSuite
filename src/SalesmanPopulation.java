@@ -4,7 +4,7 @@ import java.util.*;
  * Created by yay on 14.10.2016.
  */
 public class SalesmanPopulation extends Population {
-    private final static int CITIES = 10;
+    private final static int CITIES = 100;
     public static final Map<Integer,City> CITY_HASH_MAP;
     private final int tournamentSize;
 
