@@ -48,15 +48,16 @@ public class GeneticDynamicCharting {
         dataset.addSeries(maxFitnessSeries);
         dataset.addSeries(averageFitnessSeries);
 
-        new Timer(0, new ActionListener() {
+        new Timer(10, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ChromosomeData cd = getChromosomeData();
-                minFitnessSeries.add((int) minFitnessSeries.getItemCount(), cd.getMinFitnessValue());
-                maxFitnessSeries.add((int) maxFitnessSeries.getItemCount(), cd.getMaxFitnessValue());
-                averageFitnessSeries.add((int) averageFitnessSeries.getItemCount(), cd.getAverageFitness());
-
-                Chromosome fittest = cd.getMinFittest();
+                while(cd != null) {
+                    minFitnessSeries.add((int) minFitnessSeries.getItemCount(), cd.getMinFitnessValue());
+                    maxFitnessSeries.add((int) maxFitnessSeries.getItemCount(), cd.getMaxFitnessValue());
+                    averageFitnessSeries.add((int) averageFitnessSeries.getItemCount(), cd.getAverageFitness());
+                    cd = getChromosomeData();
+                }
             }
         }).start();
         JFreeChart chart = ChartFactory.createXYLineChart("SalesmanPath", "X",
@@ -70,16 +71,7 @@ public class GeneticDynamicCharting {
     }
 
     private ChromosomeData getChromosomeData() {
-        ChromosomeData chromosomeData = sharedBlockingQueue.poll();
-        if(chromosomeData == null) {
-            try {
-                Thread.sleep(1);
-                return getChromosomeData();
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        return chromosomeData;
+        return sharedBlockingQueue.poll();
     }
 
     public static void main(String[] args) {
