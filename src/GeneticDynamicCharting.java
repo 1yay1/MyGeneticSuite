@@ -48,15 +48,18 @@ public class GeneticDynamicCharting {
         dataset.addSeries(maxFitnessSeries);
         dataset.addSeries(averageFitnessSeries);
 
-        new Timer(10, new ActionListener() {
+        new Timer(1000/60, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ChromosomeData cd = getChromosomeData();
-                while(cd != null) {
+                int i = 0;
+                int maxNewData = 100;
+                while(cd != null && i < maxNewData) {
                     minFitnessSeries.add((int) minFitnessSeries.getItemCount(), cd.getMinFitnessValue());
                     maxFitnessSeries.add((int) maxFitnessSeries.getItemCount(), cd.getMaxFitnessValue());
                     averageFitnessSeries.add((int) averageFitnessSeries.getItemCount(), cd.getAverageFitness());
                     cd = getChromosomeData();
+                    i++;
                 }
             }
         }).start();

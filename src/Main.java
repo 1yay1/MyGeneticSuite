@@ -24,7 +24,7 @@ public class Main {
         final XYSeries maxFitnessXySeries = new XYSeries("Max Fitness");
         final XYSeries averageFitnessXySeries = new XYSeries("Average Fitness");
         ChromosomeData chromosomeData = null;
-        while (generations<300) {
+        while (generations<3000) {
             chromosomeData = sharedBlockingQueue.poll();
             if (chromosomeData != null) {
                 generations++;

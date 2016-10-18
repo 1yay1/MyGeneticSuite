@@ -102,9 +102,9 @@ public abstract class Population {
      * @return chromosome array of the population as a copy of the original.
      */
     public Chromosome[] getPopulationArray() {
-        Chromosome[] populationArrayCopy = new Chromosome[populationSize];
-        System.arraycopy(populationArray, 0, populationArrayCopy, 0, populationSize);
-        return populationArrayCopy;
+        //Chromosome[] populationArrayCopy = new Chromosome[populationSize];
+        //System.arraycopy(populationArray, 0, populationArrayCopy, 0, populationSize);
+        return this.populationArray;
     }
 
     /**
