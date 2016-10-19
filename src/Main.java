@@ -30,7 +30,7 @@ public class Main {
                 generations++;
                 minFitnessXySeries.add(generations, chromosomeData.getMinFitnessValue());
                 maxFitnessXySeries.add(generations,chromosomeData.getMaxFitnessValue());
-                averageFitnessXySeries.add(generations, chromosomeData.getAverageFitness());
+                averageFitnessXySeries.add(generations, chromosomeData.getAverageFitnessValue());
             }
         }
         int bestGene[] = chromosomeData.getMinFittest().getGene();

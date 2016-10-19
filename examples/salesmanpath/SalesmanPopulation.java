@@ -4,6 +4,7 @@ import java.util.*;
  * Created by yay on 14.10.2016.
  */
 public class SalesmanPopulation extends Population {
+    private static int id;
     private final static int CITIES = 250;
     public static final Map<Integer, City> CITY_HASH_MAP;
     private final int tournamentSize;
@@ -12,6 +13,7 @@ public class SalesmanPopulation extends Population {
      * List of cities to be traveled.
      */
     static {
+        id = 0;
         CITY_HASH_MAP = new HashMap<>();
         List<City> cityList = City.getRandomListOfCities(CITIES);
         for (int i = 0; i < CITIES; i++) {
@@ -25,7 +27,7 @@ public class SalesmanPopulation extends Population {
      * Population size is 100, mutationRate 0.01f, crossoverRate 0.85f and elistimRate 0.03f.
      */
     public SalesmanPopulation() {
-        this("SalesmanDefault", 8, 250, 0.03f, 0.85f, 0.03f);
+        this(Integer.toString(id++), 8, 250, 0.03f, 0.85f, 0.03f);
     }
 
     /**

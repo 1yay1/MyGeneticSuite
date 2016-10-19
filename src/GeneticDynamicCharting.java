@@ -7,7 +7,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Random;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -21,11 +22,18 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 public class GeneticDynamicCharting {
-    ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue;
-    private static final Random random = new Random();
+    private final ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue;
+    private final List<Population> populationList;
+    private final Map<String, Population> idPopulationMap;
 
-    public GeneticDynamicCharting(ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
+
+    public GeneticDynamicCharting(List<Population> populationList, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
+        this.populationList = populationList;
         this.sharedBlockingQueue = sharedBlockingQueue;
+        this.idPopulationMap = new HashMap<>();
+        for (Population p : populationList) {
+            idPopulationMap.put(p.getId(), p);
+        }
     }
 
     private void display() {
@@ -40,25 +48,43 @@ public class GeneticDynamicCharting {
     }
 
     private ChartPanel createPane() {
-        final XYSeries minFitnessSeries = new XYSeries("Salesman MinFitness");
-        final XYSeries maxFitnessSeries = new XYSeries("Salesman MaxFitness");
-        final XYSeries averageFitnessSeries = new XYSeries("Salesman AverageFitness");
-        XYSeriesCollection dataset = new XYSeriesCollection();
-        dataset.addSeries(minFitnessSeries);
-        dataset.addSeries(maxFitnessSeries);
-        dataset.addSeries(averageFitnessSeries);
+        Map<String, Map<String, XYSeries>> idXYseriesMap = new HashMap<>();
 
-        new Timer(1000/60, new ActionListener() {
+        idPopulationMap.forEach((id, p) -> {
+            Map<String, XYSeries> tempMap = new HashMap<>();
+            tempMap.put("min", new XYSeries(String.format("Salesman %s MinFitness", id)));
+            tempMap.put("max", new XYSeries(String.format("Salesman %s MaxFitness", id)));
+            tempMap.put("avg", new XYSeries(String.format("Salesman %s AvgFitness", id)));
+            idXYseriesMap.put(id, tempMap);
+        });
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        idXYseriesMap.forEach((id, map) -> {
+            dataset.addSeries(map.get("min"));
+            dataset.addSeries(map.get("max"));
+            dataset.addSeries(map.get("avg"));
+
+        });
+
+
+        new Timer(1000 / 60, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ChromosomeData cd = getChromosomeData();
                 int i = 0;
                 int maxNewData = 100;
-                while(cd != null && i < maxNewData) {
-                    minFitnessSeries.add((int) minFitnessSeries.getItemCount(), cd.getMinFitnessValue());
-                    maxFitnessSeries.add((int) maxFitnessSeries.getItemCount(), cd.getMaxFitnessValue());
-                    averageFitnessSeries.add((int) averageFitnessSeries.getItemCount(), cd.getAverageFitness());
-                    cd = getChromosomeData();
+                while (i < maxNewData) {
+                    ChromosomeData cd = getChromosomeData();
+                    if (cd == null) break;
+                    //if (idXYseriesMap.containsKey(cd.getId())) {
+                    Map<String, XYSeries> map = idXYseriesMap.get(cd.getId());
+                    XYSeries min = map.get("min");
+                    XYSeries max = map.get("max");
+                    XYSeries avg = map.get("avg");
+
+                    min.add((int) min.getItemCount(), cd.getMinFitnessValue());
+                    max.add((int) max.getItemCount(), cd.getMaxFitnessValue());
+                    avg.add((int) avg.getItemCount(), cd.getAverageFitnessValue());
+                    //}
                     i++;
                 }
             }
@@ -77,19 +103,19 @@ public class GeneticDynamicCharting {
         return sharedBlockingQueue.poll();
     }
 
-    public static void main(String[] args) {
+    public void start() {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue = new ArrayBlockingQueue<ChromosomeData>(100);
-                GeneticProducer producer = new GeneticProducer(new SalesmanPopulation(), sharedBlockingQueue);
-                new Thread(producer).start();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
+                for (Population p : populationList) {
+                    new Thread(new GeneticProducer(p, sharedBlockingQueue)).start();
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
-                new GeneticDynamicCharting(sharedBlockingQueue).display();
+                display();
             }
         });
     }

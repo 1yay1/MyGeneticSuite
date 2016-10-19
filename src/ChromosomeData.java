@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -7,6 +8,15 @@ import java.util.List;
 public class ChromosomeData {
     private final List<Chromosome> chromosomeList;
     private final String id;
+
+    private static final List<String> POSSIBLE_DATA;
+
+    static{
+        POSSIBLE_DATA = new ArrayList<>();
+        POSSIBLE_DATA.add("avg");
+        POSSIBLE_DATA.add("min");
+        POSSIBLE_DATA.add("max");
+    }
 
     ChromosomeData(String id, List<Chromosome> chromosomeList) {
         this.id = id;
@@ -37,7 +47,7 @@ public class ChromosomeData {
         return Collections.min(chromosomeList).getFitness();
     }
 
-    public double getAverageFitness() {
+    public double getAverageFitnessValue() {
         return chromosomeList
                 .stream()
                 .mapToDouble(Chromosome::getFitness)
