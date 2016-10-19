@@ -27,9 +27,9 @@ public class GeneticDynamicCharting {
     private final Map<String, Population> idPopulationMap;
 
 
-    public GeneticDynamicCharting(List<Population> populationList, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
+    public GeneticDynamicCharting(List<Population> populationList) {
         this.populationList = populationList;
-        this.sharedBlockingQueue = sharedBlockingQueue;
+        this.sharedBlockingQueue = new ArrayBlockingQueue<>(100);
         this.idPopulationMap = new HashMap<>();
         for (Population p : populationList) {
             idPopulationMap.put(p.getId(), p);

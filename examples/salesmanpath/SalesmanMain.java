@@ -15,8 +15,7 @@ public class SalesmanMain {
         List<Population> populationList = new ArrayList<>();
         populationList.add(p1);
         populationList.add(p2);
-        ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue = new ArrayBlockingQueue(QUEUE_MAX);
-        GeneticDynamicCharting charting = new GeneticDynamicCharting(populationList, sharedBlockingQueue);
+        GeneticDynamicCharting charting = new GeneticDynamicCharting(populationList);
         charting.start();
     }
 }
