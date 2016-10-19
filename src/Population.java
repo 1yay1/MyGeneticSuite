@@ -12,16 +12,16 @@ public abstract class Population {
     private float elitismRate;
     private float crossoverRate;
     private float mutationRate;
-    private Chromosome[] populationArray;
+    private List<Chromosome> chromosomeList;
     private final String id;
 
     /**
      * Abstract constructor for a new Instance of Population.
      * Throws {@link IllegalArgumentException} if the mutationRate and crossoverRate are not between 0 and 1.
-     * Fills the populationArray with random Chromosomes, using the abstract method generateRandomChromosome.
-     * Then the array is sorted by fitness value.
+     * Fills the chromosomeList with random Chromosomes, using the abstract method generateRandomChromosome.
+     * Then the list is sorted by fitness value.
      *
-     * @param populationSize size of populationArray
+     * @param populationSize size of chromsomeList
      * @param mutationRate   rate of mutation, has to be between 0 and 1
      * @param crossoverRate  rate of crossover, has to be between 0 and 1
      */
@@ -44,12 +44,12 @@ public abstract class Population {
         this.mutationRate = mutationRate;
         this.crossoverRate = crossoverRate;
         this.elitismRate = elitismRate;
-        this.populationArray = new Chromosome[populationSize];
+        this.chromosomeList = new ArrayList<>();
 
         for (int i = 0; i < populationSize; i++) {
-            this.populationArray[i] = generateRandomChromosome();
+            chromosomeList.add(generateRandomChromosome());
         }
-        Arrays.sort(this.populationArray);
+        Collections.sort(chromosomeList);
     }
 
     /**
@@ -97,44 +97,42 @@ public abstract class Population {
     }
 
     /**
-     * Returns a copy of the population array
+     * Returns a reference to the chromosomeList
      *
-     * @return chromosome array of the population as a copy of the original.
+     * @return
      */
-    public Chromosome[] getPopulationArray() {
-        //Chromosome[] populationArrayCopy = new Chromosome[populationSize];
-        //System.arraycopy(populationArray, 0, populationArrayCopy, 0, populationSize);
-        return this.populationArray;
+    public List<Chromosome> getChromosomeList() {
+        return this.chromosomeList;
     }
 
     /**
-     * Gets the highest fitness value Chromosome. The Population Array has to be sorted,
+     * Gets the highest fitness value Chromosome. The Population List has to be sorted,
      * but it always should be sorted in the first place. Then we can grab the last index Chromosome.
      *
      * @return highest fitness value Chromosome
      */
     public Chromosome getMaxFittest() {
-        return getMaxFittest(populationArray);
+        return getMaxFittest(chromosomeList);
     }
 
-    public static Chromosome getMaxFittest(Chromosome[] populationArray){
-        Arrays.sort(populationArray);
-        return populationArray[populationArray.length - 1];
+    public static Chromosome getMaxFittest(List<Chromosome> chromosomeList){
+        Collections.sort(chromosomeList);
+        return chromosomeList.get(chromosomeList.size()-1);
     }
 
     /**
-     * Gets the lowest fitness value Chromosome. The Population Array has to be sorted,
+     * Gets the lowest fitness value Chromosome. The Population List has to be sorted,
      * but it always should be sorted in the first place. Then we can grab the last index Chromosome.
      *
      * @return lowest fitness Chromosome
      */
     public Chromosome getMinFittest() {
-        return getMinFittest(populationArray);
+        return getMinFittest(chromosomeList);
     }
 
-    public static Chromosome getMinFittest(Chromosome[] populationArray){
-        Arrays.sort(populationArray);
-        return populationArray[0];
+    public static Chromosome getMinFittest(List<Chromosome> chromosomeList){
+        Collections.sort(chromosomeList);
+        return chromosomeList.get(0);
     }
 
 
@@ -143,33 +141,24 @@ public abstract class Population {
      *
      * @return
      */
-    public double getAverageFitness() {
-        return getAverageFitness(populationArray);
-    }
-
-    public static double getAverageFitness(Chromosome[] populationArray) {
-        double sum = 0;
-        double amount = 0;
-        for (Chromosome c : populationArray) {
-            sum += c.getFitness();
-            amount++;
-        }
-        return sum / amount;
+    public static double getAverageFitness(List<Chromosome> chromosomeList) {
+        return chromosomeList
+                .stream()
+                .mapToDouble(Chromosome::getFitness)
+                .average()
+                .getAsDouble();
     }
 
     /**
-     * Sets a new populationArray if the new length is the same as the old populationSize.
-     * Sorts the new array.
+     * Sets a new chromosomeList if the new length is the same as the old populationSize.
+     * Sorts the new List.
      *
-     * @param populationArray
+     * @param chromosomeList
      * @throws IllegalArgumentException
      */
-    public void setPopulationArray(Chromosome[] populationArray) throws IllegalArgumentException {
-        if (populationArray.length != populationSize) {
-            throw new IllegalArgumentException("Wrong size for populationArray");
-        }
-        this.populationArray = populationArray;
-        Arrays.sort(populationArray);
+    public void setChromosomeList(List<Chromosome> chromosomeList) throws IllegalArgumentException {
+        this.chromosomeList = chromosomeList;
+        Collections.sort(chromosomeList);
     }
 
     /**
@@ -178,12 +167,12 @@ public abstract class Population {
      * Once the selection value is smaller than 0, we return the current index.
      * If value never gets below 0, we return last index.
      *
-     * @return int of the index of the Chromosome in the population Array
+     * @return int of the index of the Chromosome in the chromosomeList
      */
     protected int rouletteSelect() {
         int[] fitnessArray = new int[populationSize];
         for (int i = 0; i < populationSize; i++) {
-            fitnessArray[i] = (int) populationArray[i].getFitness();
+            fitnessArray[i] = (int) chromosomeList.get(i).getFitness();
         }
         int fitnessSum = IntStream.of(fitnessArray).sum();
 
@@ -203,28 +192,26 @@ public abstract class Population {
      * @return index in the populationArray of the chosen Chromosome
      */
     protected int tournamentSelectMax(int tournamentSize) {
-        List<Chromosome> populationArrayAsList = Arrays.asList(populationArray);
-        List<Chromosome> shuffledPopulation = new ArrayList<>(populationArrayAsList);
+        List<Chromosome> shuffledPopulation = new ArrayList<>(chromosomeList);
         Collections.shuffle(shuffledPopulation);
         List<Chromosome> candidates = new ArrayList<>();
         for (int i = 0; i < tournamentSize; i++) {
             candidates.add(shuffledPopulation.get(i));
         }
         Collections.sort(candidates);
-        return populationArrayAsList.indexOf(candidates.get(candidates.size() - 1));
+        return chromosomeList.indexOf(candidates.get(candidates.size() - 1));
     }
 
     protected int tournamentSelectMin(int tournamentSize) {
-        List<Chromosome> populationArrayAsList = Arrays.asList(populationArray);
         List<Integer> shuffledIndexes = new ArrayList<>();
-        for (int i = 0; i < populationArray.length; i++) {
+        for (int i = 0; i < chromosomeList.size(); i++) {
             shuffledIndexes.add(i);
         }
         Collections.shuffle(shuffledIndexes);
 
         Map<Chromosome, Integer> candidates = new HashMap<>();
         for (int i = 0; i < tournamentSize; i++) {
-            candidates.put(populationArray[shuffledIndexes.get(i)], shuffledIndexes.get(i));
+            candidates.put(chromosomeList.get(shuffledIndexes.get(i)), shuffledIndexes.get(i));
         }
         List<Chromosome> sortedCandidates = new ArrayList<>();
         candidates.forEach((V, K) -> {
@@ -235,38 +222,77 @@ public abstract class Population {
     }
 
     /**
-     * Generates a new random Chromosome. Is used to fill the populationArray in the abstract constructor.
+     * Generates a new random Chromosome. Is used to fill the chromosomeList in the abstract constructor.
      *
      * @return new randomly generated Chromosome
      */
     protected abstract Chromosome generateRandomChromosome();
 
+
+    /**
+     * Abstract method evolve(), to be implemented by subclass.
+     * The default methods evolveToMax and evolveToMin offer a good default evolve method.
+     */
+    public abstract void evolve();
+
     /**
      * Evolves the population one generation.
-     * First copy over the best n Chromosomes, based on elitism ratio.
+     * First copy over the best n Chromosomes, based on elitism ratio.  Best equals highest fitness value.
      * Then crossover and mutate the rest based on those ratios.
-     * Lastly, we change the populationArray to the nextGenerationArray
+     * Lastly, we change the chromosomeList to the nextGeneration
      * Selection of Parents for crossover and mutation methods or defined in mutate() and selectParents()
      */
-    protected void evolve() {
-        Chromosome[] nextGeneration = new Chromosome[getPopulationSize()];
+    protected void evolveToMax() {
+        List<Chromosome> nextGeneration = new ArrayList<>();
         int i = (int) (getElitismRate() * getPopulationSize());
-        System.arraycopy(getPopulationArray(), getPopulationSize() - i - 1, nextGeneration, 0, i); //copy top n chromosomes, based on elitism rate
+        getChromosomeList().subList(i, getChromosomeList().size()).forEach((c) -> nextGeneration.add(c));
+
         while (i < getPopulationSize()) {
             if (GeneticUtilities.random.nextFloat() <= getCrossoverRate()) { //crossover?
-                Chromosome parents[] = selectParents();
-                Chromosome children[] = parents[0].mate(parents[1]);
+                List<Chromosome> parents = selectParents();
+                List<Chromosome> children = parents.get(0).mate(parents.get(1));
                 for (Chromosome c : children) { //add children if there is enough space in new population array
                     if (i < getPopulationSize()) {
-                        nextGeneration[i++] = c.mutate(getMutationRate());
+                        nextGeneration.add(c.mutate(getMutationRate()));
+                        i++;
                     }
                 }
             } else {
-                nextGeneration[i] = getPopulationArray()[i].mutate(getMutationRate());
+                nextGeneration.add(getChromosomeList().get(i).mutate(getMutationRate()));
                 i++;
             }
         }
-        setPopulationArray(nextGeneration);
+        setChromosomeList(nextGeneration);
+
+    }
+    /**
+     * Evolves the population one generation.
+     * First copy over the best n Chromosomes, based on elitism ratio. Best equals lowest fitness value.
+     * Then crossover and mutate the rest based on those ratios.
+     * Lastly, we change the chromosomeList to the nextGeneration
+     * Selection of Parents for crossover and mutation methods or defined in mutate() and selectParents()
+     */
+    protected void evolveToMin() {
+        List<Chromosome> nextGeneration = new ArrayList<>();
+        int i = (int) (getElitismRate() * getPopulationSize());
+        getChromosomeList().subList(0, i).forEach((c) -> nextGeneration.add(c));
+
+        while (i < getPopulationSize()) {
+            if (GeneticUtilities.random.nextFloat() <= getCrossoverRate()) { //crossover?
+                List<Chromosome> parents = selectParents();
+                List<Chromosome> children = parents.get(0).mate(parents.get(1));
+                for (Chromosome c : children) { //add children if there is enough space in new population array
+                    if (i < getPopulationSize()) {
+                        nextGeneration.add(c.mutate(getMutationRate()));
+                        i++;
+                    }
+                }
+            } else {
+                nextGeneration.add(getChromosomeList().get(i).mutate(getMutationRate()));
+                i++;
+            }
+        }
+        setChromosomeList(nextGeneration);
     }
 
 
@@ -274,9 +300,9 @@ public abstract class Population {
      * Abstract Method for the Selection of the parents for crossover.
      * Selection method should be implemented by child class.
      *
-     * @return newly Selected Array of parents
+     * @return newly Selected List of parents
      */
-    protected abstract Chromosome[] selectParents();
+    protected abstract List<Chromosome> selectParents();
 
     /**
      * Builds a large String where each line is the String representation of a population member and their fitness.
@@ -287,7 +313,7 @@ public abstract class Population {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
-        for (Chromosome c : populationArray) {
+        for (Chromosome c : chromosomeList) {
             sb.append(c);
             sb.append("\t");
             sb.append(c.getFitness());
@@ -298,7 +324,7 @@ public abstract class Population {
 
     public List<Double> getAllFitnessValue(){
         List<Double> fitnessValues = new ArrayList<>();
-        for(Chromosome c: populationArray) {
+        for(Chromosome c: chromosomeList) {
             fitnessValues.add(c.getFitness());
         }
         return fitnessValues;

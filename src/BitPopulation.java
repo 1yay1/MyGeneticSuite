@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Subclass of Population.
  * Population of Chromosomes which are consisting of five bits.
@@ -6,10 +9,11 @@
  * Created by yay on 12.10.2016.
  */
 public class BitPopulation extends Population {
+    private final int geneSize;
 
-
-    public BitPopulation(String id, int populationSize, float mutationRate, float crossoverRate, float elitismRate) {
+    public BitPopulation(String id, int populationSize, int geneSize, float mutationRate, float crossoverRate, float elitismRate) {
         super(id, populationSize, mutationRate, crossoverRate, elitismRate);
+        this.geneSize = geneSize;
     }
 
     /**
@@ -19,7 +23,15 @@ public class BitPopulation extends Population {
      */
     @Override
     protected Chromosome generateRandomChromosome() {
-        return new BitChromosome();
+        return new BitChromosome(geneSize);
+    }
+
+    /**
+     * Default call to evolveToMax()
+     */
+    @Override
+    public void evolve() {
+        evolveToMax();
     }
 
     /**
@@ -27,10 +39,11 @@ public class BitPopulation extends Population {
      * @return Chromosome array with two parent Chromosomes.
      */
     @Override
-    protected Chromosome[] selectParents() {
-        return new Chromosome[]{
-                getPopulationArray()[rouletteSelect()],
-                getPopulationArray()[rouletteSelect()]
-        };
+    protected List<Chromosome> selectParents() {
+        List<Chromosome> parents = new ArrayList<>();
+        parents.add(getChromosomeList().get(rouletteSelect()));
+        parents.add(getChromosomeList().get(rouletteSelect()));
+
+        return parents;
     }
 }

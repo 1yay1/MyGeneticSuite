@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -61,7 +62,7 @@ public abstract class Chromosome implements Comparable<Chromosome> {
      * @param partner the {@link Chromosome} mating partner.
      * @return the newly created chromosome offsprings.
      */
-    protected abstract Chromosome[] mate(Chromosome partner);
+    protected abstract List<Chromosome> mate(Chromosome partner);
 
     /**
      * compareTo method of Interface Comparable.

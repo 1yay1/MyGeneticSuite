@@ -1,4 +1,7 @@
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Chromosome consisting of five bits.
@@ -7,33 +10,32 @@ import java.util.BitSet;
  * Created by yay on 12.10.2016.
  */
 public class BitChromosome extends Chromosome {
-    public static int GENE_SIZE = 150;
 
 
     /**
-     * Constructor for BitChromosome, uses a randomly created Gene of length 5 as gene.
+     * Constructor for BitChromosome, uses a randomly created Gene of length geneSize as gene.
      */
-    public BitChromosome() {
-        super(GeneticUtilities.getRandomFixedLengthBitSet(GENE_SIZE));
+    public BitChromosome(int geneSize) {
+        this(GeneticUtilities.getShuffledListOfInts(2,geneSize));
     }
 
     /**
      * Private constructor, only used in mutate
      *
-     * @param gene Gene representing the new gene.
+     * @param genes Gene representing the new gene.
      */
-    private BitChromosome(Gene gene) {
-        super(gene);
+    private BitChromosome(int[] genes) {
+        super(genes);
     }
 
     /**
-     * Fitness is the cardinality of the BitSet
+     * Fitness is the amount of 1s set
      *
      * @return new fitness value, is called in constructor.
      */
     @Override
     protected double calculateFitness() {
-        return this.getGene().getBitSet().cardinality();
+        return IntStream.of(getGene()).sum();
     }
 
 
@@ -44,13 +46,10 @@ public class BitChromosome extends Chromosome {
      */
     @Override
     protected Chromosome mutate(float mutationRate) {
-        Gene newGene = this.getGene();
-        if(GeneticUtilities.random.nextFloat() < mutationRate) {
-            int i = GeneticUtilities.random.nextInt(GENE_SIZE);
-            if (newGene.get(i)) {
-                newGene.set(i, false);
-            } else {
-                newGene.set(i, true);
+        final int newGene[] = getGene();
+        for(int i = 0; i < getGene().length; i++) {
+            if(GeneticUtilities.random.nextFloat() < mutationRate) {
+                newGene[i] = newGene[i] == 1 ? 0 : 1;
             }
         }
         return new BitChromosome(newGene);
@@ -62,27 +61,32 @@ public class BitChromosome extends Chromosome {
      * and spliced together into two new chromosomes.
      *
      * @param chromosome Chromosome to be mated with.
-     * @return array of two new Chromosomes.
+     * @return list of two new Chromosomes.
      */
     @Override
-    protected Chromosome[] mate(Chromosome chromosome) {
+    protected List<Chromosome> mate(Chromosome chromosome) {
 
-        int pivotPoint = GeneticUtilities.random.nextInt(GENE_SIZE);
-        Gene chromosomeOneGene = this.getGene();
-        Gene chromosomeTwoGene = chromosome.getGene();
-        BitSet newChromosomeOneGene = new BitSet();
-        BitSet newChromosomeTwoGene = new BitSet();
+        final int length = getGene().length;
+        List<Chromosome> newChromosomes = new ArrayList<>();
+
+        final int pivotPoint = GeneticUtilities.random.nextInt(length);
+        final int chromosomeOneGene[] = this.getGene();
+        final int chromosomeTwoGene[] = chromosome.getGene();
+        final int newChromosomeOneGene[] = new int[length];
+        final int newChromosomeTwoGene[] = new int[length];
+
         for (int i = 0; i < pivotPoint; i++) {
-            newChromosomeOneGene.set(i, chromosomeOneGene.get(i));
-            newChromosomeTwoGene.set(i, chromosomeTwoGene.get(i));
+            newChromosomeOneGene[i] = chromosomeOneGene[i];
+            newChromosomeTwoGene[i] = chromosomeTwoGene[i];
         }
-        for (int i = pivotPoint; i < GENE_SIZE; i++) {
-            newChromosomeOneGene.set(i, chromosomeTwoGene.get(i));
-            newChromosomeTwoGene.set(i, chromosomeOneGene.get(i));
+        for (int i = pivotPoint; i < getGene().length; i++) {
+            newChromosomeOneGene[i] = chromosomeTwoGene[i];
+            newChromosomeTwoGene[i] = chromosomeOneGene[i];
         }
-        return new Chromosome[]{
-                new BitChromosome(new Gene(newChromosomeOneGene, GENE_SIZE)),
-                new BitChromosome(new Gene(newChromosomeTwoGene, GENE_SIZE))
-        };
+
+        newChromosomes.add(new BitChromosome(chromosomeOneGene));
+        newChromosomes.add(new BitChromosome(chromosomeTwoGene));
+
+        return newChromosomes;
     }
 }

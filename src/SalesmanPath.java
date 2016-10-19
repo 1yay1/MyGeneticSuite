@@ -21,7 +21,7 @@ public class SalesmanPath extends Chromosome {
      * @param numberOfCities
      */
     public SalesmanPath(int numberOfCities) {
-        this(GeneticUtilities.getShuffledListOfInts(numberOfCities));
+        this(GeneticUtilities.getShuffledListOfUniqueInts(numberOfCities));
     }
 
     /**
@@ -119,10 +119,12 @@ public class SalesmanPath extends Chromosome {
      * The rest of the Path is filled by the remaining cities of the other Path object.
      *
      * @param partner the {@link Chromosome} mating partner.
-     * @return Chromosome Array with two children Chromosomes.
+     * @return Chromosome List with two children Chromosomes.
      */
     @Override
-    protected Chromosome[] mate(Chromosome partner) {
+    protected List<Chromosome> mate(Chromosome partner) {
+        List<Chromosome> children = new ArrayList<>();
+
         int firstPath[] = getGene();
         int secondPath[] = partner.getGene();
 
@@ -180,8 +182,9 @@ public class SalesmanPath extends Chromosome {
                 }
             }
         }
-
-        return new Chromosome[]{new SalesmanPath(newFirstPath), new SalesmanPath(newSecondPath)};
+        children.add(new SalesmanPath(newFirstPath));
+        children.add(new SalesmanPath(newSecondPath));
+        return children;
     }
 
     /**

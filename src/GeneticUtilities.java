@@ -91,11 +91,25 @@ public class GeneticUtilities {
     }
 
     /**
+     * Returns a shuffled array with n ints randomly filled with values from 0..max.
+     * @param max, n
+     * @return int[n]
+     */
+    public static int[] getShuffledListOfInts(int max, int n){
+        int numbers[] = new int[n];
+        for(int i = 0; i <n; i++) {
+            random.nextInt(max);
+        }
+        return numbers;
+    }
+
+
+    /**
      * Returns a shuffled array with n ints from 0..maxNumer.
      * @param maxNumber
      * @return int[maxNumber]
      */
-    public static int[] getShuffledListOfInts(int maxNumber){
+    public static int[] getShuffledListOfUniqueInts(int maxNumber){
         List<Integer> numbers = new ArrayList<>();
         for(int i =0; i< maxNumber; i++){
             numbers.add(i);

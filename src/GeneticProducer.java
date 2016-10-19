@@ -1,7 +1,5 @@
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by yay on 16.10.2016.
@@ -25,7 +23,7 @@ public class GeneticProducer implements Runnable {
     public void run() {
         this.running = true;
         while (running) {
-            ChromosomeData chromosomeData = new ChromosomeData(population.getId(), Arrays.asList(population.getPopulationArray()));
+            ChromosomeData chromosomeData = new ChromosomeData(population.getId(), population.getChromosomeList());
             sharedBlockingQueue.offer(chromosomeData);
             population.evolve();
         }
