@@ -12,7 +12,7 @@ public class SalesmanMain {
     public static void main(String[] args) {
         Population p1 = new SalesmanPopulation();
         Population p2 = new SalesmanPopulation();
-        System.out.println(SalesmanPopulation.getCity(1));
+        //System.out.println(SalesmanPopulation.getCity(1));
         List<Population> populationList = new ArrayList<>();
         populationList.add(p1);
         populationList.add(p2);

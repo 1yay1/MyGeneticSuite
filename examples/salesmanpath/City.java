@@ -78,6 +78,7 @@ public class City {
 
         Double x1 = new Double(c1.getX());
         Double y1 = new Double(c1.getY());
+
         Double x2 = new Double(c2.getX());
         Double y2 = new Double(c2.getY());
         Double line1 = x1 > x2 ? x1 - x2 : x2 - x1;

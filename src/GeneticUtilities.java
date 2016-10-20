@@ -122,4 +122,27 @@ public class GeneticUtilities {
         }
         return intArray;
     }
+
+    /**
+     * Returns a shuffled array of int from 0...maxnumber. the array always starts with 0, rest is the same.
+     * with n ints from 0..maxNumer.
+     * @param maxNumber
+     * @return int[maxNumber]
+     */
+    public static int[] getRandomPath(int maxNumber){
+        List<Integer> temp = new ArrayList<>();
+        for(int i =1; i< maxNumber; i++){
+            temp.add(i);
+        }
+        Collections.shuffle(temp);
+        List<Integer> numbers = new ArrayList<>();
+
+        numbers.add(0);
+        numbers.addAll(temp);
+        int intArray[] = new int[maxNumber];
+        for(int i =0; i< maxNumber; i++){
+            intArray[i] = numbers.get(i).intValue();
+        }
+        return intArray;
+    }
 }

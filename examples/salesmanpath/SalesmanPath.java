@@ -22,7 +22,7 @@ public class SalesmanPath extends Chromosome {
      * @param numberOfCities
      */
     public SalesmanPath(int numberOfCities) {
-        this(GeneticUtilities.getShuffledListOfUniqueInts(numberOfCities));
+        this(GeneticUtilities.getRandomPath(numberOfCities));
     }
 
     /**
@@ -87,10 +87,11 @@ public class SalesmanPath extends Chromosome {
         for (int i : path) {
             cityList.add(SalesmanPopulation.getCity(i));
         }
+
         for (int i = 0; i < cityList.size() - 1; i++) {
             fitness += City.distanceFromTo(cityList.get(i), cityList.get(i + 1));
         }
-        fitness += City.distanceFromTo(cityList.get(0), cityList.get(cityList.size() - 1));
+
         return fitness;
     }
 
@@ -102,10 +103,10 @@ public class SalesmanPath extends Chromosome {
     @Override
     protected Chromosome mutate(float mutationRate) {
         int[] path = getGene();
-        for(int i = 0; i < path.length; i++) {
+        for(int i = 1; i < path.length-1; i++) {
             if(ThreadLocalRandom.current().nextFloat() < mutationRate) {
                 int index1 = i;
-                int index2 = ThreadLocalRandom.current().nextInt(path.length - 1);
+                int index2 = i+1;
                 int temp = path[index1];
                 path[index1] = path[index2];
                 path[index2] = temp;
@@ -129,13 +130,13 @@ public class SalesmanPath extends Chromosome {
         int firstPath[] = getGene();
         int secondPath[] = partner.getGene();
 
-        int index1 = ThreadLocalRandom.current().nextInt(firstPath.length - 1);
+        int index1 = 1+ThreadLocalRandom.current().nextInt(firstPath.length - 2);
         int index2 = index1 + ThreadLocalRandom.current().nextInt(firstPath.length - index1);
 
         int newFirstPath[] = new int[firstPath.length];
         int newSecondPath[] = new int[firstPath.length];
 
-        for (int i = 0; i < firstPath.length; i++) {
+        for (int i = 1; i < firstPath.length; i++) {
             newFirstPath[i] = newSecondPath[i] = -1;
         }
 
@@ -148,7 +149,7 @@ public class SalesmanPath extends Chromosome {
             addedToTwo.add(new Integer(firstPath[i]));
         }
 
-        for (int i = 0; i < firstPath.length; i++) {
+        for (int i = 1; i < firstPath.length; i++) {
             Integer nextPotential = new Integer(firstPath[i]);
             boolean canAdd = true;
             for (Integer b : addedToOne) {
@@ -157,7 +158,7 @@ public class SalesmanPath extends Chromosome {
                 }
             }
             if (canAdd) {
-                for (int j = 0; j < firstPath.length; j++) {
+                for (int j = 1; j < firstPath.length; j++) {
                     if (newFirstPath[j] == -1) {
                         newFirstPath[j] = nextPotential.intValue();
                         break;
@@ -166,7 +167,7 @@ public class SalesmanPath extends Chromosome {
             }
         }
 
-        for (int i = 0; i < firstPath.length; i++) {
+        for (int i = 1; i < firstPath.length; i++) {
             Integer nextPotential = new Integer(secondPath[i]);
             boolean canAdd = true;
             for (Integer b : addedToTwo) {
@@ -175,7 +176,7 @@ public class SalesmanPath extends Chromosome {
                 }
             }
             if (canAdd) {
-                for (int j = 0; j < firstPath.length; j++) {
+                for (int j = 1; j < firstPath.length; j++) {
                     if (newSecondPath[j] == -1) {
                         newSecondPath[j] = nextPotential.intValue();
                         break;
@@ -183,6 +184,7 @@ public class SalesmanPath extends Chromosome {
                 }
             }
         }
+
         children.add(new SalesmanPath(newFirstPath));
         children.add(new SalesmanPath(newSecondPath));
         return children;

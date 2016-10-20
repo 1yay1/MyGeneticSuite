@@ -39,6 +39,7 @@ public class Main {
             bestPath.add(SalesmanPopulation.CITY_HASH_MAP.get(i).getX(), SalesmanPopulation.CITY_HASH_MAP.get(i).getY());
         }
 
+
         final XYSeriesCollection fitnessDataset = new XYSeriesCollection();
         fitnessDataset.addSeries(averageFitnessXySeries);
         fitnessDataset.addSeries(minFitnessXySeries);
