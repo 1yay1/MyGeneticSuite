@@ -8,10 +8,18 @@ public class GeneticProducer implements Runnable {
     private volatile boolean running; //running boolean for the run method
     private final ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue;
     private final Population population;
+    private static final int DEFAULT_MAX_GENERATIONS = 10000;
+    int maxGenerations;
 
-    public GeneticProducer(Population pop, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
+
+    public GeneticProducer(int maxGenerations, Population pop, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
         this.sharedBlockingQueue = sharedBlockingQueue;
         this.population = pop;
+        this.maxGenerations = maxGenerations;
+    }
+
+    public GeneticProducer(Population pop, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
+        this(DEFAULT_MAX_GENERATIONS, pop, sharedBlockingQueue);
     }
 
     /**
@@ -22,10 +30,13 @@ public class GeneticProducer implements Runnable {
     @Override
     public void run() {
         this.running = true;
-        while (running) {
+        int i = 0;
+        while (running && i < maxGenerations) {
             ChromosomeData chromosomeData = new ChromosomeData(population.getId(), population.getChromosomeList());
-            sharedBlockingQueue.offer(chromosomeData);
-            population.evolve();
+            if (sharedBlockingQueue.offer(chromosomeData)) {
+                population.evolve();
+                i++;
+            }
         }
     }
 
@@ -37,5 +48,14 @@ public class GeneticProducer implements Runnable {
         if (running) {
             running = false;
         }
+    }
+
+    /**
+     * return maxGenerations
+     *
+     * @return
+     */
+    public int getMaxGenerations() {
+        return maxGenerations;
     }
 }

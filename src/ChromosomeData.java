@@ -1,21 +1,29 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.logging.MemoryHandler;
 
 /**
  * Created by yay on 17.10.2016.
  */
 public class ChromosomeData {
+
+    interface CallMethod {
+        void runMethod(ChromosomeData d);
+    }
+
     private final List<Chromosome> chromosomeList;
     private final String id;
+    private final static Map<METHOD, CallMethod> methodMap;
 
-    private static final List<String> POSSIBLE_DATA;
+    public enum METHOD{
+        AVG,
+        MIN,
+        MAX
+    }
 
     static{
-        POSSIBLE_DATA = new ArrayList<>();
-        POSSIBLE_DATA.add("avg");
-        POSSIBLE_DATA.add("min");
-        POSSIBLE_DATA.add("max");
+        methodMap =new EnumMap<>(METHOD.class);
+
     }
 
     ChromosomeData(String id, List<Chromosome> chromosomeList) {

@@ -5,21 +5,20 @@ import java.util.*;
  */
 public class SalesmanPopulation extends Population {
     private static int id;
-    private final static int CITIES = 250;
-    public static final Map<Integer, City> CITY_HASH_MAP;
+    private final static int CITIES = 100;
+    public final static  Map<Integer, City> CITY_HASH_MAP;
     private final int tournamentSize;
 
     /**
      * List of cities to be traveled.
      */
     static {
-        id = 0;
-        CITY_HASH_MAP = new HashMap<>();
-        List<City> cityList = City.getRandomListOfCities(CITIES);
-        for (int i = 0; i < CITIES; i++) {
-            CITY_HASH_MAP.put(i, cityList.get(i));
-        }
-        ;
+            id = 0;
+            CITY_HASH_MAP = new HashMap<>();
+            List<City> cityList = City.getRandomListOfCities(CITIES);
+            for (int i = 0; i < CITIES; i++) {
+                CITY_HASH_MAP.put(i, cityList.get(i));
+            }
     }
 
     /**

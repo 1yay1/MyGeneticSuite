@@ -17,7 +17,15 @@ import javax.swing.Timer;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.Annotation;
+import org.jfree.chart.annotations.XYAnnotation;
+import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.axis.Axis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.Range;
+import org.jfree.data.Value;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -25,15 +33,16 @@ public class GeneticDynamicCharting {
     private final ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue;
     private final List<Population> populationList;
     private final Map<String, Population> idPopulationMap;
+    private final int maxGenerations;
 
-
-    public GeneticDynamicCharting(List<Population> populationList) {
+    public GeneticDynamicCharting(List<Population> populationList, int maxGenerations) {
         this.populationList = populationList;
         this.sharedBlockingQueue = new ArrayBlockingQueue<>(100);
         this.idPopulationMap = new HashMap<>();
         for (Population p : populationList) {
             idPopulationMap.put(p.getId(), p);
         }
+        this.maxGenerations = maxGenerations;
     }
 
     private void display() {
@@ -46,16 +55,20 @@ public class GeneticDynamicCharting {
         f.setLocationRelativeTo(null);
         f.setVisible(true);
     }
-
+    static int i = 0;
     private ChartPanel createPane() {
         Map<String, Map<String, XYSeries>> idXYseriesMap = new HashMap<>();
+        Map<String, XYTextAnnotation> idAnnotationMap = new HashMap<>();
 
         idPopulationMap.forEach((id, p) -> {
             Map<String, XYSeries> tempMap = new HashMap<>();
-            tempMap.put("min", new XYSeries(String.format("Salesman %s MinFitness", id)));
-            tempMap.put("max", new XYSeries(String.format("Salesman %s MaxFitness", id)));
-            tempMap.put("avg", new XYSeries(String.format("Salesman %s AvgFitness", id)));
+            tempMap.put("min", new XYSeries(String.format("%s MinFitness", id))) ;
+            tempMap.put("max", new XYSeries(String.format("%s MaxFitness", id))) ;
+            tempMap.put("avg", new XYSeries(String.format("%s AvgFitness", id)));
             idXYseriesMap.put(id, tempMap);
+
+            XYTextAnnotation annotation = new XYTextAnnotation(String.format("%s MinFitness", id),0,0);
+            idAnnotationMap.put(id,annotation);
         });
 
         XYSeriesCollection dataset = new XYSeriesCollection();
@@ -65,8 +78,6 @@ public class GeneticDynamicCharting {
             dataset.addSeries(map.get("avg"));
 
         });
-
-
         new Timer(1000 / 60, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -80,6 +91,10 @@ public class GeneticDynamicCharting {
                     XYSeries min = map.get("min");
                     XYSeries max = map.get("max");
                     XYSeries avg = map.get("avg");
+                    XYTextAnnotation annotation = idAnnotationMap.get(cd.getId());
+                    annotation.setText(String.format("%s MinFitnes: %s",cd.getId(),Double.toString(cd.getMinFitnessValue())));
+                    annotation.setX(min.getItemCount());
+                    annotation.setY(cd.getMinFitnessValue());
 
                     min.add((int) min.getItemCount(), cd.getMinFitnessValue());
                     max.add((int) max.getItemCount(), cd.getMaxFitnessValue());
@@ -90,7 +105,16 @@ public class GeneticDynamicCharting {
             }
         }).start();
         JFreeChart chart = ChartFactory.createXYLineChart("SalesmanPath", "X",
-                "Y", dataset, PlotOrientation.VERTICAL, true, true, true);
+                "Y", dataset, PlotOrientation.VERTICAL, true, false, false);
+        XYPlot plot = (XYPlot) chart.getPlot();
+        ValueAxis rangeAxis = plot.getRangeAxis();
+        ValueAxis domainAxis = plot.getDomainAxis();
+        domainAxis.setRange(new Range(0,10000));
+        for(XYTextAnnotation a: idAnnotationMap.values()){
+            plot.addAnnotation(a);
+        }
+
+
         return new ChartPanel(chart) {
             @Override
             public Dimension getPreferredSize() {
@@ -108,7 +132,7 @@ public class GeneticDynamicCharting {
             @Override
             public void run() {
                 for (Population p : populationList) {
-                    new Thread(new GeneticProducer(p, sharedBlockingQueue)).start();
+                    new Thread(new GeneticProducer(maxGenerations, p, sharedBlockingQueue)).start();
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException ex) {
