@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by yay on 13.10.2016.
@@ -102,9 +103,9 @@ public class SalesmanPath extends Chromosome {
     protected Chromosome mutate(float mutationRate) {
         int[] path = getGene();
         for(int i = 0; i < path.length; i++) {
-            if(GeneticUtilities.random.nextFloat() < mutationRate) {
+            if(ThreadLocalRandom.current().nextFloat() < mutationRate) {
                 int index1 = i;
-                int index2 = GeneticUtilities.random.nextInt(path.length - 1);
+                int index2 = ThreadLocalRandom.current().nextInt(path.length - 1);
                 int temp = path[index1];
                 path[index1] = path[index2];
                 path[index2] = temp;
@@ -128,8 +129,8 @@ public class SalesmanPath extends Chromosome {
         int firstPath[] = getGene();
         int secondPath[] = partner.getGene();
 
-        int index1 = GeneticUtilities.random.nextInt(firstPath.length - 1);
-        int index2 = index1 + GeneticUtilities.random.nextInt(firstPath.length - index1);
+        int index1 = ThreadLocalRandom.current().nextInt(firstPath.length - 1);
+        int index2 = index1 + ThreadLocalRandom.current().nextInt(firstPath.length - index1);
 
         int newFirstPath[] = new int[firstPath.length];
         int newSecondPath[] = new int[firstPath.length];

@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
@@ -176,7 +177,7 @@ public abstract class Population {
         }
         int fitnessSum = IntStream.of(fitnessArray).sum();
 
-        double select = GeneticUtilities.random.nextDouble() * fitnessSum;
+        double select = ThreadLocalRandom.current().nextDouble() * fitnessSum;
         for (int i = 0; i < populationSize; i++) {
             select -= fitnessArray[i];
             if (select <= 0) return i;
@@ -248,7 +249,7 @@ public abstract class Population {
         getChromosomeList().subList(i, getChromosomeList().size()).forEach((c) -> nextGeneration.add(c));
 
         while (i < getPopulationSize()) {
-            if (GeneticUtilities.random.nextFloat() <= getCrossoverRate()) { //crossover?
+            if (ThreadLocalRandom.current().nextFloat() <= getCrossoverRate()) { //crossover?
                 List<Chromosome> parents = selectParents();
                 List<Chromosome> children = parents.get(0).mate(parents.get(1));
                 for (Chromosome c : children) { //add children if there is enough space in new population array
@@ -278,7 +279,7 @@ public abstract class Population {
         getChromosomeList().subList(0, i).forEach((c) -> nextGeneration.add(c));
 
         while (i < getPopulationSize()) {
-            if (GeneticUtilities.random.nextFloat() <= getCrossoverRate()) { //crossover?
+            if (ThreadLocalRandom.current().nextFloat() <= getCrossoverRate()) { //crossover?
                 List<Chromosome> parents = selectParents();
                 List<Chromosome> children = parents.get(0).mate(parents.get(1));
                 for (Chromosome c : children) { //add children if there is enough space in new population array

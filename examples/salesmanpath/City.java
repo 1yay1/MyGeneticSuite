@@ -1,6 +1,7 @@
 
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by yay on 13.10.2016.
@@ -48,7 +49,7 @@ public class City {
      * Constructor for a new City Object that takes no arguments and returns a City with randomly generated coordinates.
      */
     public City() {
-        this(GeneticUtilities.random.nextInt(MAX_X), GeneticUtilities.random.nextInt(MAX_Y));
+        this(ThreadLocalRandom.current().nextInt(MAX_X), ThreadLocalRandom.current().nextInt(MAX_Y));
     }
 
     /**

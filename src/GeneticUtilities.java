@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.*;
 
 /**
@@ -34,7 +35,7 @@ public class GeneticUtilities {
     public static Gene getRandomFixedLengthBitSet(int length) {
         BitSet bitSet = new BitSet();
         for(int i = 0; i < length; i++) {
-            bitSet.set(i,random.nextBoolean());
+            bitSet.set(i,ThreadLocalRandom.current().nextBoolean());
         }
         return new Gene(bitSet,length);
     }
@@ -60,7 +61,7 @@ public class GeneticUtilities {
      * @return char from ascii table with random index
      */
     private static char getRandomChar(int from, int to) {
-        int index = random.nextInt(to - from) + from;
+        int index = ThreadLocalRandom.current().nextInt(to - from) + from;
         return ASCII_TABLE[index];
     }
 
@@ -98,7 +99,7 @@ public class GeneticUtilities {
     public static int[] getShuffledListOfInts(int max, int n){
         int numbers[] = new int[n];
         for(int i = 0; i <n; i++) {
-            random.nextInt(max);
+            ThreadLocalRandom.current().nextInt(max);
         }
         return numbers;
     }

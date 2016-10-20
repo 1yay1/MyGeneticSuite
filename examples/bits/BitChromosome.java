@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
 /**
@@ -47,7 +48,7 @@ public class BitChromosome extends Chromosome {
     protected Chromosome mutate(float mutationRate) {
         final int newGene[] = getGene();
         for(int i = 0; i < getGene().length; i++) {
-            if(GeneticUtilities.random.nextFloat() < mutationRate) {
+            if(ThreadLocalRandom.current().nextFloat() < mutationRate) {
                 newGene[i] = newGene[i] == 1 ? 0 : 1;
             }
         }
@@ -68,7 +69,7 @@ public class BitChromosome extends Chromosome {
         final int length = getGene().length;
         List<Chromosome> newChromosomes = new ArrayList<>();
 
-        final int pivotPoint = GeneticUtilities.random.nextInt(length);
+        final int pivotPoint = ThreadLocalRandom.current().nextInt(length);
         final int chromosomeOneGene[] = this.getGene();
         final int chromosomeTwoGene[] = chromosome.getGene();
         final int newChromosomeOneGene[] = new int[length];
