@@ -5,20 +5,28 @@ import java.util.*;
  */
 public class SalesmanPopulation extends Population {
     private static int id;
-    private final static int CITIES = 20;
-    public final static  Map<Integer, City> CITY_HASH_MAP;
+    protected final static int CITIES = 20;
+    public final static Map<Integer, City> CITY_HASH_MAP;
     private final int tournamentSize;
+
+    public static final float DEFAULT_MUTATION_RATE = 0.06f;
+    public static final float DEFAULT_CROSSOVER_RATE = 0.65f;
+    public static final float DEFAULT_ELITISM_RATE = 0.01f;
+    public static final int DEFAULT_POPULATION_SIZE = 500;
+    public static final int DEFAULT_TOURNAMENT_SIZE = 8;
+
+    public static final String DEFAULT_ID = "SalesmanPopulation";
 
     /**
      * List of cities to be traveled.
      */
     static {
-            id = 0;
-            CITY_HASH_MAP = new HashMap<>();
-            List<City> cityList = City.getRandomListOfCities(CITIES);
-            for (int i = 0; i < CITIES; i++) {
-                CITY_HASH_MAP.put(i, cityList.get(i));
-            }
+        id = 0;
+        CITY_HASH_MAP = new HashMap<>();
+        List<City> cityList = City.getRandomListOfCities(CITIES);
+        for (int i = 0; i < CITIES; i++) {
+            CITY_HASH_MAP.put(i, cityList.get(i));
+        }
     }
 
     /**
@@ -26,7 +34,7 @@ public class SalesmanPopulation extends Population {
      * Population size is 100, mutationRate 0.01f, crossoverRate 0.85f and elistimRate 0.03f.
      */
     public SalesmanPopulation() {
-        this(Integer.toString(id++), 8, 500, 0.06f, 0.65f, 0.01f);
+        this(DEFAULT_ID+" "+id++, DEFAULT_TOURNAMENT_SIZE, DEFAULT_POPULATION_SIZE, DEFAULT_MUTATION_RATE, DEFAULT_CROSSOVER_RATE, DEFAULT_ELITISM_RATE);
     }
 
     /**
@@ -37,6 +45,11 @@ public class SalesmanPopulation extends Population {
         this.tournamentSize = tournamentSize;
     }
 
+    public SalesmanPopulation(String id, int tournamentSize, int populationSize, float mutationRate, float crossoverRate, float elitismRate, int selectionType, int mutationType) {
+        super(id, populationSize, mutationRate, crossoverRate, elitismRate, selectionType, mutationType);
+        this.tournamentSize = tournamentSize;
+    }
+
     /**
      * We create a new SalesmanPath Object with a shuffled list of cities.
      *
@@ -44,7 +57,7 @@ public class SalesmanPopulation extends Population {
      */
     @Override
     protected Chromosome generateRandomChromosome() {
-        return new SalesmanPath(CITIES);
+        return new SalesmanPath(CITIES, getMutationType());
     }
 
 
@@ -65,13 +78,22 @@ public class SalesmanPopulation extends Population {
      * @return Array with two selected parents.
      */
     @Override
-    protected List<Chromosome> selectParents() {
-        List<Chromosome> parents = new ArrayList<>();
-        parents.add(getChromosomeList().get(tournamentSelectMin(tournamentSize)));
-        parents.add(getChromosomeList().get(tournamentSelectMin(tournamentSize)));
+    protected List<Chromosome> selectParents(int type) {
+        if (type == Population.ROULETTE_SELECT) {
+            List<Chromosome> parents = new ArrayList<>();
+            parents.add(getChromosomeList().get(tournamentSelectMin(tournamentSize)));
+            parents.add(getChromosomeList().get(tournamentSelectMin(tournamentSize)));
 
-        return parents;
+            return parents;
+        } else { //default selection is tournament selecion
+            List<Chromosome> parents = new ArrayList<>();
+            parents.add(getChromosomeList().get(tournamentSelectMin(tournamentSize)));
+            parents.add(getChromosomeList().get(tournamentSelectMin(tournamentSize)));
+
+            return parents;
+        }
     }
+
 
     /**
      * Evolves the population one generation.

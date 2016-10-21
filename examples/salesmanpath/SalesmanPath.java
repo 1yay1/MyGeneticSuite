@@ -10,9 +10,16 @@ public class SalesmanPath extends Chromosome {
      *
      * @param
      */
+    private SalesmanPath(int[] cityArray, int mutationType) {
+        super(cityArray, mutationType);
+    }
+
     private SalesmanPath(int[] cityArray) {
         super(cityArray);
     }
+
+    private static int RANDOM_SWAP_MUTATE = 1;
+    private static int NEIGHBOR_SWAP_MUTATE = 0;
 
     /**
      * Constructor for a path that takes a byte value of the number of cities,
@@ -23,6 +30,10 @@ public class SalesmanPath extends Chromosome {
      */
     public SalesmanPath(int numberOfCities) {
         this(GeneticUtilities.getRandomPath(numberOfCities));
+    }
+
+    public SalesmanPath(int numberOfCities, int mutationType) {
+        this(GeneticUtilities.getRandomPath(numberOfCities), mutationType);
     }
 
     /**
@@ -101,7 +112,20 @@ public class SalesmanPath extends Chromosome {
      * @return newly mutated Chromosome object.
      */
     @Override
-    protected Chromosome mutate(float mutationRate) {
+    protected Chromosome mutate(int i, float mutationRate) {
+        if(i == NEIGHBOR_SWAP_MUTATE) {
+            return mutateNeighborSwap(mutationRate);
+        } else if(i == RANDOM_SWAP_MUTATE) {
+            return mutateRandomSwap(mutationRate);
+        } else return mutate(mutationRate);
+    }
+
+    /**
+     * Mutation method that swaps with the next neighboar randomly
+     * @param mutationRate
+     * @return
+     */
+    private Chromosome mutateNeighborSwap(float mutationRate) {
         int[] path = getGene();
         for(int i = 1; i < path.length-1; i++) {
             if(ThreadLocalRandom.current().nextFloat() < mutationRate) {
@@ -113,7 +137,27 @@ public class SalesmanPath extends Chromosome {
 
             }
         }
-        return new SalesmanPath(path);
+        return new SalesmanPath(path, getMutationType());
+    }
+
+    /**
+     * Mutation method that swaps a random city
+     * @param mutationRate
+     * @return
+     */
+    private Chromosome mutateRandomSwap(float mutationRate) {
+        int[] path = getGene();
+        for(int i = 1; i < path.length-1; i++) {
+            if(ThreadLocalRandom.current().nextFloat() < mutationRate) {
+                int index1 = i;
+                int index2 = i+1 + ThreadLocalRandom.current().nextInt(path.length - i);
+                int temp = path[index1];
+                path[index1] = path[index2];
+                path[index2] = temp;
+
+            }
+        }
+        return new SalesmanPath(path, getMutationType());
     }
 
     /**
@@ -185,8 +229,8 @@ public class SalesmanPath extends Chromosome {
             }
         }
 
-        children.add(new SalesmanPath(newFirstPath));
-        children.add(new SalesmanPath(newSecondPath));
+        children.add(new SalesmanPath(newFirstPath, getMutationType()));
+        children.add(new SalesmanPath(newSecondPath, getMutationType()));
         return children;
     }
 

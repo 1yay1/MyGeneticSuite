@@ -16,6 +16,15 @@ public abstract class Population {
     private List<Chromosome> chromosomeList;
     private final String id;
 
+    private int mutationType;
+    private int selectionType;
+
+    public static int TOURNAMENT_SELECT = 0;
+    public static int ROULETTE_SELECT = 1;
+    public static int DEFAULT_SELECTION = TOURNAMENT_SELECT;
+
+    public static int DEFAULT_MUTATION = Chromosome.DEFAULT_MUTATION;
+
     /**
      * Abstract constructor for a new Instance of Population.
      * Throws {@link IllegalArgumentException} if the mutationRate and crossoverRate are not between 0 and 1.
@@ -36,7 +45,7 @@ public abstract class Population {
         return LOGGER;
     }
 
-    protected Population(String id, int populationSize, float mutationRate, float crossoverRate, float elitismRate) throws IllegalArgumentException {
+    protected Population(String id, int populationSize, float mutationRate, float crossoverRate, float elitismRate, int selectionType, int mutationType) throws IllegalArgumentException {
         if (mutationRate < 0 || mutationRate >= 1 || crossoverRate < 0 || crossoverRate >= 1) {
             throw new IllegalArgumentException("mutationRate, CrossoverRate must both be <= 1 and < 0");
         }
@@ -46,11 +55,25 @@ public abstract class Population {
         this.crossoverRate = crossoverRate;
         this.elitismRate = elitismRate;
         this.chromosomeList = new ArrayList<>();
+        this.selectionType = selectionType;
+        this.mutationType = mutationType;
 
         for (int i = 0; i < populationSize; i++) {
             chromosomeList.add(generateRandomChromosome());
         }
         Collections.sort(chromosomeList);
+    }
+
+    protected Population(String id, int populationSize, float mutationRate, float crossoverRate, float elitismRate) throws IllegalArgumentException {
+        this(id, populationSize, mutationRate, crossoverRate, elitismRate, DEFAULT_SELECTION, DEFAULT_MUTATION);
+    }
+
+    public int getMutationType() {
+        return mutationType;
+    }
+
+    public int getSelectionType() {
+        return selectionType;
     }
 
     /**
@@ -237,6 +260,8 @@ public abstract class Population {
     public abstract void evolve();
 
     /**
+     * Default evolve method that can be called in the child class in evolve.
+     * Uses default selection and mutation methods.
      * Evolves the population one generation.
      * First copy over the best n Chromosomes, based on elitism ratio.  Best equals highest fitness value.
      * Then crossover and mutate the rest based on those ratios.
@@ -254,12 +279,12 @@ public abstract class Population {
                 List<Chromosome> children = parents.get(0).mate(parents.get(1));
                 for (Chromosome c : children) { //add children if there is enough space in new population array
                     if (i < getPopulationSize()) {
-                        nextGeneration.add(c.mutate(getMutationRate()));
+                        nextGeneration.add(c.mutate(mutationType,getMutationRate()));
                         i++;
                     }
                 }
             } else {
-                nextGeneration.add(getChromosomeList().get(i).mutate(getMutationRate()));
+                nextGeneration.add(getChromosomeList().get(i).mutate(mutationType,getMutationRate()));
                 i++;
             }
         }
@@ -284,12 +309,12 @@ public abstract class Population {
                 List<Chromosome> children = parents.get(0).mate(parents.get(1));
                 for (Chromosome c : children) { //add children if there is enough space in new population array
                     if (i < getPopulationSize()) {
-                        nextGeneration.add(c.mutate(getMutationRate()));
+                        nextGeneration.add(c.mutate(mutationType,getMutationRate()));
                         i++;
                     }
                 }
             } else {
-                nextGeneration.add(getChromosomeList().get(i).mutate(getMutationRate()));
+                nextGeneration.add(getChromosomeList().get(i).mutate(mutationType,getMutationRate()));
                 i++;
             }
         }
@@ -300,10 +325,21 @@ public abstract class Population {
     /**
      * Abstract Method for the Selection of the parents for crossover.
      * Selection method should be implemented by child class.
-     *
+     * Multiple selection methods will then be selected by the type parameter.
      * @return newly Selected List of parents
      */
-    protected abstract List<Chromosome> selectParents();
+    protected abstract List<Chromosome> selectParents(int type);
+
+    /**
+     * Default Method for the Selection of the parents for crossover.
+     * Calls selectParents(DEFAULT_MUTATION) which is 0.
+     * Selection method should be implemented by child class.
+     * Multiple selection methods will then be selected by the type parameter.
+     * @return newly Selected List of parents
+     */
+    protected List<Chromosome> selectParents() {
+        return selectParents(selectionType);
+    }
 
     /**
      * Builds a large String where each line is the String representation of a population member and their fitness.

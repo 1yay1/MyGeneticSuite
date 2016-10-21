@@ -7,12 +7,25 @@ import java.util.logging.Logger;
 public abstract class Chromosome implements Comparable<Chromosome> {
     private int[] gene;
     private double fitness;
+    public static int DEFAULT_MUTATION = 0;
+    private int mutationType;
 
     private static Logger LOGGER = Logger.getLogger(Chromosome.class.getName());
 
     public Chromosome(int[] gene) {
         this.gene = gene;
         this.fitness = calculateFitness();
+        this.mutationType = DEFAULT_MUTATION;
+    }
+
+    public Chromosome(int[] gene, int mutationType) {
+        this.gene = gene;
+        this.fitness = calculateFitness();
+        this.mutationType = mutationType;
+    }
+
+    public int getMutationType() {
+        return mutationType;
     }
 
     /**
@@ -47,11 +60,20 @@ public abstract class Chromosome implements Comparable<Chromosome> {
     protected abstract double calculateFitness();
 
     /**
+     * Default mutation method, calls the mutation method implemented by subclass with type variable DEFAULT_MUTATION = 0.
+     * @param mutationRate rate of mutation
+     * @return newly mutated Chromosomes
+     */
+    protected Chromosome mutate(float mutationRate){
+        return mutate(mutationType, mutationRate);
+    }
+
+    /**
      * Mutation method to be implemented by subclass.
      * @param mutationRate rate of mutation
      * @return newly mutated Chromosomes
      */
-    protected abstract Chromosome mutate(float mutationRate);
+    protected abstract Chromosome mutate(int type, float mutationRate);
 
     /**
      * mate method to be implemented by child class
