@@ -45,7 +45,7 @@ public class BitChromosome extends Chromosome {
      * @return newly mutated chromosome
      */
     @Override
-    protected Chromosome mutate(float mutationRate) {
+    protected Chromosome mutate(int mutationType, float mutationRate) {
         final int newGene[] = getGene();
         for(int i = 0; i < getGene().length; i++) {
             if(ThreadLocalRandom.current().nextFloat() < mutationRate) {

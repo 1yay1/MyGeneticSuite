@@ -39,7 +39,7 @@ public class BitPopulation extends Population {
      * @return Chromosome array with two parent Chromosomes.
      */
     @Override
-    protected List<Chromosome> selectParents() {
+    protected List<Chromosome> selectParents(int selectionType) {
         List<Chromosome> parents = new ArrayList<>();
         parents.add(getChromosomeList().get(rouletteSelect()));
         parents.add(getChromosomeList().get(rouletteSelect()));
