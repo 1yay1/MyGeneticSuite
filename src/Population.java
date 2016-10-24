@@ -6,7 +6,7 @@ import java.util.stream.IntStream;
 /**
  * Created by yay on 12.10.2016.
  */
-public abstract class Population {
+public abstract class Population<E extends Number> {
     private static Logger LOGGER = Logger.getLogger(Population.class.getName());
 
     private int populationSize;
@@ -16,15 +16,27 @@ public abstract class Population {
     private List<Chromosome> chromosomeList;
     private final String id;
 
-    private int mutationType;
-    private int selectionType;
 
-    public static int TOURNAMENT_SELECT = 0;
-    public static int ROULETTE_SELECT = 1;
-    public static int DEFAULT_SELECTION = TOURNAMENT_SELECT;
+    private FunctionalSelectionInterface selectionInterface;
+    private FunctionalCrossoverInterface crossoverInterface;
+    private FunctionalMutationInterface mutationInterface;
+    private FunctionalChromosomeGenerator chromosomeGenerator;
 
-    public static int DEFAULT_MUTATION = Chromosome.DEFAULT_MUTATION;
+    public FunctionalCrossoverInterface getCrossoverInterface() {
+        return crossoverInterface;
+    }
 
+    public FunctionalMutationInterface getMutationInterface() {
+        return mutationInterface;
+    }
+
+    public FunctionalSelectionInterface getSelectionInterface() {
+        return selectionInterface;
+    }
+
+    public FunctionalChromosomeGenerator getChromosomeGenerator() {
+        return chromosomeGenerator;
+    }
     /**
      * Abstract constructor for a new Instance of Population.
      * Throws {@link IllegalArgumentException} if the mutationRate and crossoverRate are not between 0 and 1.
@@ -45,7 +57,17 @@ public abstract class Population {
         return LOGGER;
     }
 
-    protected Population(String id, int populationSize, float mutationRate, float crossoverRate, float elitismRate, int selectionType, int mutationType) throws IllegalArgumentException {
+    protected Population(
+            String id,
+            int populationSize,
+            float mutationRate,
+            float crossoverRate,
+            float elitismRate,
+            FunctionalChromosomeGenerator chromosomeGenerator,
+            FunctionalSelectionInterface selectionInterface,
+            FunctionalCrossoverInterface crossoverInterface,
+            FunctionalMutationInterface mutationInterface
+    ) throws IllegalArgumentException {
         if (mutationRate < 0 || mutationRate >= 1 || crossoverRate < 0 || crossoverRate >= 1) {
             throw new IllegalArgumentException("mutationRate, CrossoverRate must both be <= 1 and < 0");
         }
@@ -54,30 +76,22 @@ public abstract class Population {
         this.mutationRate = mutationRate;
         this.crossoverRate = crossoverRate;
         this.elitismRate = elitismRate;
-        this.chromosomeList = new ArrayList<>();
-        this.selectionType = selectionType;
-        this.mutationType = mutationType;
+        this.selectionInterface = selectionInterface;
+        this.crossoverInterface = crossoverInterface;
+        this.mutationInterface = mutationInterface;
+        this.chromosomeGenerator = chromosomeGenerator;
 
+        this.chromosomeList = new ArrayList<>();
         for (int i = 0; i < populationSize; i++) {
-            chromosomeList.add(generateRandomChromosome());
+            chromosomeList.add(chromosomeGenerator.generateRandomChromosome());
         }
         Collections.sort(chromosomeList);
     }
 
-    protected Population(String id, int populationSize, float mutationRate, float crossoverRate, float elitismRate) throws IllegalArgumentException {
-        this(id, populationSize, mutationRate, crossoverRate, elitismRate, DEFAULT_SELECTION, DEFAULT_MUTATION);
-    }
-
-    public int getMutationType() {
-        return mutationType;
-    }
-
-    public int getSelectionType() {
-        return selectionType;
-    }
 
     /**
      * Getter for the id. Id is the name of the population.
+     *
      * @return
      */
     public String getId() {
@@ -139,9 +153,9 @@ public abstract class Population {
         return getMaxFittest(chromosomeList);
     }
 
-    public static Chromosome getMaxFittest(List<Chromosome> chromosomeList){
+    public static Chromosome getMaxFittest(List<Chromosome> chromosomeList) {
         Collections.sort(chromosomeList);
-        return chromosomeList.get(chromosomeList.size()-1);
+        return chromosomeList.get(chromosomeList.size() - 1);
     }
 
     /**
@@ -154,7 +168,7 @@ public abstract class Population {
         return getMinFittest(chromosomeList);
     }
 
-    public static Chromosome getMinFittest(List<Chromosome> chromosomeList){
+    public static Chromosome getMinFittest(List<Chromosome> chromosomeList) {
         Collections.sort(chromosomeList);
         return chromosomeList.get(0);
     }
@@ -191,21 +205,44 @@ public abstract class Population {
      * Once the selection value is smaller than 0, we return the current index.
      * If value never gets below 0, we return last index.
      *
-     * @return int of the index of the Chromosome in the chromosomeList
+     * @return FunctionalSelectionInterface to be used as a parameter for the selectParents() method
      */
-    protected int rouletteSelect() {
-        int[] fitnessArray = new int[populationSize];
-        for (int i = 0; i < populationSize; i++) {
-            fitnessArray[i] = (int) chromosomeList.get(i).getFitness();
-        }
-        int fitnessSum = IntStream.of(fitnessArray).sum();
+    public static FunctionalSelectionInterface rouletteSelect() {
+        return chromosomeList1 -> {
+            int[] fitnessArray = new int[chromosomeList1.size()];
+            for (int i = 0; i < chromosomeList1.size(); i++) {
+                fitnessArray[i] = (int) chromosomeList1.get(i).getFitness();
+            }
+            int fitnessSum = IntStream.of(fitnessArray).sum();
 
-        double select = ThreadLocalRandom.current().nextDouble() * fitnessSum;
-        for (int i = 0; i < populationSize; i++) {
-            select -= fitnessArray[i];
-            if (select <= 0) return i;
-        }
-        return populationSize - 1;
+            double select = ThreadLocalRandom.current().nextDouble() * fitnessSum;
+            for (int i = 0; i < chromosomeList1.size(); i++) {
+                select -= fitnessArray[i];
+                if (select <= 0) return i;
+            }
+            return chromosomeList1.size() - 1;
+        };
+    }
+
+    public static FunctionalSelectionInterface tournamentSelectMin(int tournamentSize) {
+        return chromosomeList1 -> {
+            List<Integer> shuffledIndexes = new ArrayList<>();
+            for (int i = 0; i < chromosomeList1.size(); i++) {
+                shuffledIndexes.add(i);
+            }
+            Collections.shuffle(shuffledIndexes);
+
+            Map<Chromosome, Integer> candidates = new HashMap<>();
+            for (int i = 0; i < tournamentSize; i++) {
+                candidates.put(chromosomeList1.get(shuffledIndexes.get(i)), shuffledIndexes.get(i));
+            }
+            List<Chromosome> sortedCandidates = new ArrayList<>();
+            candidates.forEach((V, K) -> {
+                sortedCandidates.add(V);
+            });
+            Collections.sort(sortedCandidates);
+            return candidates.get(sortedCandidates.get(0));
+        };
     }
 
     /**
@@ -215,18 +252,58 @@ public abstract class Population {
      * @param tournamentSize amount of candidates to choose from
      * @return index in the populationArray of the chosen Chromosome
      */
-    protected int tournamentSelectMax(int tournamentSize) {
-        List<Chromosome> shuffledPopulation = new ArrayList<>(chromosomeList);
-        Collections.shuffle(shuffledPopulation);
-        List<Chromosome> candidates = new ArrayList<>();
-        for (int i = 0; i < tournamentSize; i++) {
-            candidates.add(shuffledPopulation.get(i));
-        }
-        Collections.sort(candidates);
-        return chromosomeList.indexOf(candidates.get(candidates.size() - 1));
+    public static FunctionalSelectionInterface tournamentSelectMax(int tournamentSize) {
+        return (chromosomeList) -> {
+            List<Integer> shuffledIndexes = new ArrayList<>();
+            for (int i = 0; i < chromosomeList.size(); i++) {
+                shuffledIndexes.add(i);
+            }
+            Collections.shuffle(shuffledIndexes);
+
+            Map<Chromosome, Integer> candidates = new HashMap<>();
+            for (int i = 0; i < tournamentSize; i++) {
+                candidates.put(chromosomeList.get(shuffledIndexes.get(i)), shuffledIndexes.get(i));
+            }
+            List<Chromosome> sortedCandidates = new ArrayList<>();
+            candidates.forEach((V, K) -> {
+                sortedCandidates.add(V);
+            });
+            Collections.sort(sortedCandidates);
+            Collections.reverse(sortedCandidates);
+            return candidates.get(sortedCandidates.get(0));
+        };
     }
 
-    protected int tournamentSelectMin(int tournamentSize) {
+
+    public static FunctionalCrossoverInterface onePointCrossover() {
+        return parentChromosomeList -> {
+            List<Chromosome> children = new ArrayList<>();
+
+            final List<Number> chromosomeOneGene = parentChromosomeList.get(0).getGene();
+            final List<Number> chromosomeTwoGene = parentChromosomeList.get(1).getGene();
+            final int length = chromosomeOneGene.size();
+
+            final int pivotPoint = ThreadLocalRandom.current().nextInt(length);
+            final List<Number> newChromosomeOneGene = new ArrayList<Number>();
+            final List<Number> newChromosomeTwoGene = new ArrayList<Number>();
+
+            for (int i = 0; i < pivotPoint; i++) {
+                newChromosomeOneGene.add(chromosomeOneGene.get(i));
+                newChromosomeTwoGene.add(chromosomeTwoGene.get(i));
+            }
+            for (int i = pivotPoint; i < length; i++) {
+                newChromosomeOneGene.add(chromosomeTwoGene.get(i));
+                newChromosomeTwoGene.add(chromosomeOneGene.get(i));
+            }
+
+            children.add(parentChromosomeList.get(0).createChild(newChromosomeOneGene));
+            children.add(parentChromosomeList.get(1).createChild(newChromosomeTwoGene));
+
+            return children;
+        };
+    }
+
+    /*protected int tournamentSelectMin(int tournamentSize) {
         List<Integer> shuffledIndexes = new ArrayList<>();
         for (int i = 0; i < chromosomeList.size(); i++) {
             shuffledIndexes.add(i);
@@ -243,14 +320,8 @@ public abstract class Population {
         });
         Collections.sort(sortedCandidates);
         return candidates.get(sortedCandidates.get(0));
-    }
+    }*/
 
-    /**
-     * Generates a new random Chromosome. Is used to fill the chromosomeList in the abstract constructor.
-     *
-     * @return new randomly generated Chromosome
-     */
-    protected abstract Chromosome generateRandomChromosome();
 
 
     /**
@@ -270,27 +341,29 @@ public abstract class Population {
      */
     protected void evolveToMax() {
         List<Chromosome> nextGeneration = new ArrayList<>();
-        int i = (int) (getElitismRate() * getPopulationSize());
-        getChromosomeList().subList(i, getChromosomeList().size()).forEach((c) -> nextGeneration.add(c));
-
+        int i = 0;
+        if(getElitismRate() > 0) {
+            i = (int) (getElitismRate() * getPopulationSize());
+            getChromosomeList().subList(getChromosomeList().size() - i, getChromosomeList().size()).forEach((c) -> nextGeneration.add(c));
+        }
         while (i < getPopulationSize()) {
             if (ThreadLocalRandom.current().nextFloat() <= getCrossoverRate()) { //crossover?
-                List<Chromosome> parents = selectParents();
-                List<Chromosome> children = parents.get(0).mate(parents.get(1));
+                List<Chromosome> children = crossoverInterface.crossover(selectParents());
                 for (Chromosome c : children) { //add children if there is enough space in new population array
                     if (i < getPopulationSize()) {
-                        nextGeneration.add(c.mutate(mutationType,getMutationRate()));
+                        nextGeneration.add(mutationInterface.mutate(c, mutationRate));
                         i++;
                     }
                 }
             } else {
-                nextGeneration.add(getChromosomeList().get(i).mutate(mutationType,getMutationRate()));
+                nextGeneration.add(mutationInterface.mutate(getChromosomeList().get(i), mutationRate));
                 i++;
             }
         }
         setChromosomeList(nextGeneration);
 
     }
+
     /**
      * Evolves the population one generation.
      * First copy over the best n Chromosomes, based on elitism ratio. Best equals lowest fitness value.
@@ -305,16 +378,15 @@ public abstract class Population {
 
         while (i < getPopulationSize()) {
             if (ThreadLocalRandom.current().nextFloat() <= getCrossoverRate()) { //crossover?
-                List<Chromosome> parents = selectParents();
-                List<Chromosome> children = parents.get(0).mate(parents.get(1));
+                List<Chromosome> children = crossoverInterface.crossover(selectParents());
                 for (Chromosome c : children) { //add children if there is enough space in new population array
                     if (i < getPopulationSize()) {
-                        nextGeneration.add(c.mutate(mutationType,getMutationRate()));
+                        nextGeneration.add(mutationInterface.mutate(c, mutationRate));
                         i++;
                     }
                 }
             } else {
-                nextGeneration.add(getChromosomeList().get(i).mutate(mutationType,getMutationRate()));
+                nextGeneration.add(mutationInterface.mutate(getChromosomeList().get(i), mutationRate));
                 i++;
             }
         }
@@ -323,23 +395,21 @@ public abstract class Population {
 
 
     /**
-     * Abstract Method for the Selection of the parents for crossover.
-     * Selection method should be implemented by child class.
-     * Multiple selection methods will then be selected by the type parameter.
-     * @return newly Selected List of parents
-     */
-    protected abstract List<Chromosome> selectParents(int type);
-
-    /**
      * Default Method for the Selection of the parents for crossover.
-     * Calls selectParents(DEFAULT_MUTATION) which is 0.
+     * Default is to select two parents
      * Selection method should be implemented by child class.
      * Multiple selection methods will then be selected by the type parameter.
+     *
      * @return newly Selected List of parents
      */
     protected List<Chromosome> selectParents() {
-        return selectParents(selectionType);
+        List<Chromosome> parents = new ArrayList<>();
+        parents.add(getChromosomeList().get(selectionInterface.select(getChromosomeList())));
+        parents.add(getChromosomeList().get(selectionInterface.select(getChromosomeList())));
+
+        return parents;
     }
+
 
     /**
      * Builds a large String where each line is the String representation of a population member and their fitness.
@@ -359,9 +429,9 @@ public abstract class Population {
         return sb.toString();
     }
 
-    public List<Double> getAllFitnessValue(){
+    public List<Double> getAllFitnessValue() {
         List<Double> fitnessValues = new ArrayList<>();
-        for(Chromosome c: chromosomeList) {
+        for (Chromosome c : chromosomeList) {
             fitnessValues.add(c.getFitness());
         }
         return fitnessValues;

@@ -21,12 +21,17 @@ public class GeneticProducer implements Runnable {
     private final Population population;
     private static final int DEFAULT_MAX_GENERATIONS = 10000;
     int maxGenerations;
+    private final Double maxFitness;
 
-
-    public GeneticProducer(int maxGenerations, Population pop, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
+    public GeneticProducer(int maxGenerations, Double maxFitness, Population pop, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
         this.sharedBlockingQueue = sharedBlockingQueue;
         this.population = pop;
         this.maxGenerations = maxGenerations;
+        this.maxFitness = maxFitness;
+    }
+
+    public GeneticProducer(int maxGenerations, Population pop, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
+        this(maxGenerations, null, pop, sharedBlockingQueue);
     }
 
     public GeneticProducer(Population pop, ArrayBlockingQueue<ChromosomeData> sharedBlockingQueue) {
@@ -40,6 +45,7 @@ public class GeneticProducer implements Runnable {
      */
     @Override
     public void run() {
+
         this.running = true;
         int i = 0;
         /*SalesmanPopulation.CITY_HASH_MAP.forEach((v,k) -> {
@@ -47,8 +53,13 @@ public class GeneticProducer implements Runnable {
         });*/
         ChromosomeData chromosomeData = null;
         while (running && i < maxGenerations) {
-            chromosomeData = new ChromosomeData(population.getId(), population.getChromosomeList());
+            chromosomeData = new ChromosomeData(population.getId(), population.getChromosomeList(), i);
             if (sharedBlockingQueue.offer(chromosomeData)) {
+                if(maxFitness != null) {
+                    if(chromosomeData.getMaxFitnessValue() == maxFitness.doubleValue()) {
+                        break;
+                    }
+                }
                 population.evolve();
                 i++;
             }

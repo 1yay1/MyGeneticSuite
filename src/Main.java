@@ -9,6 +9,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class Main {
@@ -33,10 +34,10 @@ public class Main {
                 averageFitnessXySeries.add(generations, chromosomeData.getAverageFitnessValue());
             }
         }
-        int bestGene[] = chromosomeData.getMinFittest().getGene();
+        List<Number> bestGene = chromosomeData.getMinFittest().getGene();
         final XYSeries bestPath = new XYSeries("Best path",false);
-        for(int i: bestGene) {
-            bestPath.add(SalesmanPopulation.CITY_HASH_MAP.get(i).getX(), SalesmanPopulation.CITY_HASH_MAP.get(i).getY());
+        for(Number n: bestGene) {
+            bestPath.add(SalesmanPopulation.getCity(n.intValue()).getX(), SalesmanPopulation.getCity(n.intValue()).getY());
         }
 
 

@@ -6,12 +6,17 @@ import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+/**
+ * NOT USED AT THIS POINT
+ */
 
 /**
  * Created by yay on 12.10.2016.
  * Class that holds the genetic information. BitSet uses less memory than byte[] array but has no fixed size.
+ *
  * This Class uses BitSet together with a size variable.
  */
+@Deprecated
 public class Gene {
 
     private final BitSet bitSet;

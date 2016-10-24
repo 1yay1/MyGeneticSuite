@@ -1,4 +1,6 @@
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
@@ -10,13 +12,28 @@ import java.util.stream.IntStream;
  * Created by yay on 12.10.2016.
  */
 public class BitChromosome extends Chromosome {
-
+    @Override
+    public Chromosome createChild(List<Number> gene) {
+        return new BitChromosome(gene);
+    }
 
     /**
      * Constructor for BitChromosome, uses a randomly created Gene of length geneSize as gene.
      */
-    public BitChromosome(int geneSize) {
-        this(GeneticUtilities.getShuffledListOfInts(2,geneSize));
+    public BitChromosome(int geneSize, int setBits) {
+        this(createRandomGene(geneSize,setBits));
+    }
+
+    private static List<Number> createRandomGene(int geneSize, int setBits) {
+        List<Number> gene = new ArrayList<>();
+        for(int i = 0; i < geneSize - setBits; i++) {
+            gene.add(new Integer(0));
+        }
+        for(int i = 0; i < setBits; i ++) {
+            gene.add(new Integer(1));
+        }
+        Collections.shuffle(gene, ThreadLocalRandom.current());
+        return gene;
     }
 
     /**
@@ -24,7 +41,7 @@ public class BitChromosome extends Chromosome {
      *
      * @param genes Gene representing the new gene.
      */
-    private BitChromosome(int[] genes) {
+    public BitChromosome(List<Number> genes) {
         super(genes);
     }
 
@@ -35,58 +52,12 @@ public class BitChromosome extends Chromosome {
      */
     @Override
     protected double calculateFitness() {
-        return IntStream.of(getGene()).sum();
+        return getGene().stream().mapToInt((i) -> i.intValue()).sum();
     }
 
-
-    /**
-     * Mutate a randomly chosen bit in the gene.
-     *
-     * @return newly mutated chromosome
-     */
     @Override
-    protected Chromosome mutate(int mutationType, float mutationRate) {
-        final int newGene[] = getGene();
-        for(int i = 0; i < getGene().length; i++) {
-            if(ThreadLocalRandom.current().nextFloat() < mutationRate) {
-                newGene[i] = newGene[i] == 1 ? 0 : 1;
-            }
-        }
-        return new BitChromosome(newGene);
+    public String toString(){
+        return Arrays.toString(getGene().toArray());
     }
 
-    /**
-     * Mates the Chromosomes.
-     * The gene of each Chromosome gets cut at a randomly generated pivot point,
-     * and spliced together into two new chromosomes.
-     *
-     * @param chromosome Chromosome to be mated with.
-     * @return list of two new Chromosomes.
-     */
-    @Override
-    protected List<Chromosome> mate(Chromosome chromosome) {
-
-        final int length = getGene().length;
-        List<Chromosome> newChromosomes = new ArrayList<>();
-
-        final int pivotPoint = ThreadLocalRandom.current().nextInt(length);
-        final int chromosomeOneGene[] = this.getGene();
-        final int chromosomeTwoGene[] = chromosome.getGene();
-        final int newChromosomeOneGene[] = new int[length];
-        final int newChromosomeTwoGene[] = new int[length];
-
-        for (int i = 0; i < pivotPoint; i++) {
-            newChromosomeOneGene[i] = chromosomeOneGene[i];
-            newChromosomeTwoGene[i] = chromosomeTwoGene[i];
-        }
-        for (int i = pivotPoint; i < getGene().length; i++) {
-            newChromosomeOneGene[i] = chromosomeTwoGene[i];
-            newChromosomeTwoGene[i] = chromosomeOneGene[i];
-        }
-
-        newChromosomes.add(new BitChromosome(chromosomeOneGene));
-        newChromosomes.add(new BitChromosome(chromosomeTwoGene));
-
-        return newChromosomes;
-    }
 }

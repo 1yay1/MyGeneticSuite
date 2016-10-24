@@ -2,47 +2,38 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
+ * Chromosome class.
+ * Wraps the gene and the fitness.
  * Created by yay on 12.10.2016.
  */
 public abstract class Chromosome implements Comparable<Chromosome> {
-    private int[] gene;
+    private List<Number> gene;
     private double fitness;
-    public static int DEFAULT_MUTATION = 0;
-    private int mutationType;
 
-    private static Logger LOGGER = Logger.getLogger(Chromosome.class.getName());
-
-    public Chromosome(int[] gene) {
+    /**
+     * Default constructor taking a list of Number objects as gene.
+     * Fitness is then calculated.
+     * @param gene
+     */
+    public Chromosome(List<Number> gene) {
         this.gene = gene;
         this.fitness = calculateFitness();
-        this.mutationType = DEFAULT_MUTATION;
-    }
-
-    public Chromosome(int[] gene, int mutationType) {
-        this.gene = gene;
-        this.fitness = calculateFitness();
-        this.mutationType = mutationType;
-    }
-
-    public int getMutationType() {
-        return mutationType;
     }
 
     /**
-     * Gets the private static Logger Object for the class.
-     * @return LOGGER object.
+     * @return Reference to this gene.
      */
-    public static Logger getLOGGER() {
-        return LOGGER;
-    }
-
-    /**
-     * @return copy of gene of this chromosome.
-     */
-    public int[] getGene() {
+    public List<Number> getGene() {
         return gene;
     }
 
+
+    /**
+     * createChild method to create a new Chromosome of the same class as the subclass.
+     * @param gene
+     * @return
+     */
+    public abstract Chromosome createChild(List<Number> gene);
 
     /**
      * @return fitness value as int
@@ -59,32 +50,6 @@ public abstract class Chromosome implements Comparable<Chromosome> {
      */
     protected abstract double calculateFitness();
 
-    /**
-     * Default mutation method, calls the mutation method implemented by subclass with type variable DEFAULT_MUTATION = 0.
-     * @param mutationRate rate of mutation
-     * @return newly mutated Chromosomes
-     */
-    protected Chromosome mutate(float mutationRate){
-        return mutate(mutationType, mutationRate);
-    }
-
-    /**
-     * Mutation method to be implemented by subclass.
-     * @param mutationRate rate of mutation
-     * @return newly mutated Chromosomes
-     */
-    protected abstract Chromosome mutate(int type, float mutationRate);
-
-    /**
-     * mate method to be implemented by child class
-     * Creates offsprings.
-     * It is possible to only implement it so that it returns an array with only one offspring.
-     * Or to pass null as the param and create offspring(s) from itself.
-     *
-     * @param partner the {@link Chromosome} mating partner.
-     * @return the newly created chromosome offsprings.
-     */
-    protected abstract List<Chromosome> mate(Chromosome partner);
 
     /**
      * compareTo method of Interface Comparable.
@@ -111,10 +76,10 @@ public abstract class Chromosome implements Comparable<Chromosome> {
             return false;
         }
         Chromosome chromosome = (Chromosome) object;
-        int[] gene = chromosome.getGene();
-        if(gene.length != this.gene.length) return false;
-        for(int i =0 ; i < gene.length; i ++) {
-            if(this.gene[i] != gene[i]) return false;
+        List<Number> gene = chromosome.getGene();
+        if(gene.size() != this.gene.size()) return false;
+        for(int i =0 ; i < gene.size(); i ++) {
+            if(!this.gene.get(i).equals(gene.get(i))) return false;
         }
         return this.getFitness() == chromosome.getFitness();
     }
@@ -128,8 +93,8 @@ public abstract class Chromosome implements Comparable<Chromosome> {
     public String toString(){
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        for(int i = 0; i < gene.length; i++){
-            sb.append(i);
+        for(int i = 0; i < gene.size(); i++){
+            sb.append(gene.get(i));
             sb.append(", ");
         }
         sb.replace(sb.lastIndexOf(", "),sb.length(),"");

@@ -10,16 +10,18 @@ public class SalesmanPath extends Chromosome {
      *
      * @param
      */
-    private SalesmanPath(int[] cityArray, int mutationType) {
-        super(cityArray, mutationType);
-    }
 
-    private SalesmanPath(int[] cityArray) {
-        super(cityArray);
+    private SalesmanPath(List<Number> cityList) {
+        super(cityList);
     }
 
     private static int RANDOM_SWAP_MUTATE = 1;
     private static int NEIGHBOR_SWAP_MUTATE = 0;
+
+    @Override
+    public Chromosome createChild(List<Number> gene) {
+        return new SalesmanPath(gene);
+    }
 
     /**
      * Constructor for a path that takes a byte value of the number of cities,
@@ -33,7 +35,7 @@ public class SalesmanPath extends Chromosome {
     }
 
     public SalesmanPath(int numberOfCities, int mutationType) {
-        this(GeneticUtilities.getRandomPath(numberOfCities), mutationType);
+        this(GeneticUtilities.getRandomPath(numberOfCities));
     }
 
     /**
@@ -92,13 +94,11 @@ public class SalesmanPath extends Chromosome {
     @Override
     protected double calculateFitness() {
         double fitness = 0;
-        int path[] = getGene();
-
+        List<Number> path = getGene();
         List<City> cityList = new ArrayList<>();
-        for (int i : path) {
-            cityList.add(SalesmanPopulation.getCity(i));
+        for (Number i : path) {
+            cityList.add(SalesmanPopulation.getCity(i.intValue()));
         }
-
         for (int i = 0; i < cityList.size() - 1; i++) {
             fitness += City.distanceFromTo(cityList.get(i), cityList.get(i + 1));
         }
@@ -111,14 +111,7 @@ public class SalesmanPath extends Chromosome {
      *
      * @return newly mutated Chromosome object.
      */
-    @Override
-    protected Chromosome mutate(int i, float mutationRate) {
-        if(i == NEIGHBOR_SWAP_MUTATE) {
-            return mutateNeighborSwap(mutationRate);
-        } else if(i == RANDOM_SWAP_MUTATE) {
-            return mutateRandomSwap(mutationRate);
-        } else return mutate(mutationRate);
-    }
+
 
     /**
      * Mutation method that swaps with the next neighboar randomly
@@ -126,18 +119,18 @@ public class SalesmanPath extends Chromosome {
      * @return
      */
     private Chromosome mutateNeighborSwap(float mutationRate) {
-        int[] path = getGene();
-        for(int i = 1; i < path.length-1; i++) {
+        List<Number> path = getGene();
+        for(int i = 1; i < path.size()-1; i++) {
             if(ThreadLocalRandom.current().nextFloat() < mutationRate) {
                 int index1 = i;
                 int index2 = i+1;
-                int temp = path[index1];
-                path[index1] = path[index2];
-                path[index2] = temp;
+                Number temp = path.get(index1);
+                path.set(index1, path.get(index2));
+                path.set(index2,temp);
 
             }
         }
-        return new SalesmanPath(path, getMutationType());
+        return new SalesmanPath(path);
     }
 
     /**
@@ -146,18 +139,17 @@ public class SalesmanPath extends Chromosome {
      * @return
      */
     private Chromosome mutateRandomSwap(float mutationRate) {
-        int[] path = getGene();
-        for(int i = 1; i < path.length-1; i++) {
+        List<Number> path = getGene();
+        for(int i = 1; i < path.size()-1; i++) {
             if(ThreadLocalRandom.current().nextFloat() < mutationRate) {
                 int index1 = i;
-                int index2 = i+1 + ThreadLocalRandom.current().nextInt(path.length - i);
-                int temp = path[index1];
-                path[index1] = path[index2];
-                path[index2] = temp;
-
+                int index2 = i+1 + ThreadLocalRandom.current().nextInt(path.size() - i);
+                Number temp = path.get(index1);
+                path.set(index1, path.get(index2));
+                path.set(index2,temp);
             }
         }
-        return new SalesmanPath(path, getMutationType());
+        return new SalesmanPath(path);
     }
 
     /**
@@ -167,8 +159,8 @@ public class SalesmanPath extends Chromosome {
      * @param partner the {@link Chromosome} mating partner.
      * @return Chromosome List with two children Chromosomes.
      */
-    @Override
-    protected List<Chromosome> mate(Chromosome partner) {
+
+   /* protected List<Chromosome> mate(Chromosome partner) {
         List<Chromosome> children = new ArrayList<>();
 
         int firstPath[] = getGene();
@@ -229,10 +221,10 @@ public class SalesmanPath extends Chromosome {
             }
         }
 
-        children.add(new SalesmanPath(newFirstPath, getMutationType()));
-        children.add(new SalesmanPath(newSecondPath, getMutationType()));
+        children.add(new SalesmanPath(newFirstPath));
+        children.add(new SalesmanPath(newSecondPath));
         return children;
-    }
+    }*/
 
     /**
      * Creates a String representation of the object consisting of a String representation of the gene and the fitness.

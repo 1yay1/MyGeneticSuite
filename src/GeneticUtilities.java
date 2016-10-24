@@ -83,7 +83,7 @@ public class GeneticUtilities {
         for(byte i =0; i< maxNumber; i++){
             numbers.add(i);
         }
-        Collections.shuffle(numbers);
+        Collections.shuffle(numbers, ThreadLocalRandom.current());
         byte byteArray[] = new byte[maxNumber];
         for(byte i =0; i< maxNumber; i++){
             byteArray[i] = numbers.get(i).byteValue();
@@ -115,7 +115,7 @@ public class GeneticUtilities {
         for(int i =0; i< maxNumber; i++){
             numbers.add(i);
         }
-        Collections.shuffle(numbers);
+        Collections.shuffle(numbers, ThreadLocalRandom.current());
         int intArray[] = new int[maxNumber];
         for(int i =0; i< maxNumber; i++){
             intArray[i] = numbers.get(i).intValue();
@@ -129,20 +129,16 @@ public class GeneticUtilities {
      * @param maxNumber
      * @return int[maxNumber]
      */
-    public static int[] getRandomPath(int maxNumber){
+    public static List<Number> getRandomPath(int maxNumber) {
         List<Integer> temp = new ArrayList<>();
-        for(int i =1; i< maxNumber; i++){
+        for (int i = 1; i < maxNumber; i++) {
             temp.add(i);
         }
-        Collections.shuffle(temp);
-        List<Integer> numbers = new ArrayList<>();
+        Collections.shuffle(temp, ThreadLocalRandom.current());
+        List<Number> numbers = new ArrayList<>();
 
         numbers.add(0);
         numbers.addAll(temp);
-        int intArray[] = new int[maxNumber];
-        for(int i =0; i< maxNumber; i++){
-            intArray[i] = numbers.get(i).intValue();
-        }
-        return intArray;
-    }
+        return numbers;
+}
 }
