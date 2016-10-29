@@ -28,6 +28,7 @@ public class BitMain {
     private final static Map<Integer, FunctionalCrossoverInterface> crossoverInterfaceMap;
     private final static Map<Integer, FunctionalMutationInterface> mutationInterfaceMap;
     private final static Map<Integer, FunctionalSelectionInterface> selectionInterfaceMap;
+    private final static Map<Integer, FunctionalEvolutionInterface> evolutionInterfaceMap;
 
     static {
         crossoverInterfaceMap = new HashMap<>();
@@ -43,6 +44,12 @@ public class BitMain {
         selectionInterfaceMap.put(2, Population.tournamentSelectMax(2));
         selectionInterfaceMap.put(3, Population.tournamentSelectMax(4));
         selectionInterfaceMap.put(4, Population.tournamentSelectMax(8));
+
+        evolutionInterfaceMap = new HashMap<>();
+        evolutionInterfaceMap.put(0, Population.evolveToMax());
+        evolutionInterfaceMap.put(0, Population.evolveToMaxAndReplicate(0.1f));
+
+
     }
 
 
@@ -263,7 +270,6 @@ public class BitMain {
             sb1.append("generation: ");
             sb1.append(idGenerationUntilMaxFitnessMap.get(id).intValue() + 1);
             sb1.append("\n");
-            //System.out.println(sb.toString());
         });
         sb1.append("**********************");
         sb1.append("\nAverages generation until max fitness is achieved: ");

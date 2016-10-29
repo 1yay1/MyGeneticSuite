@@ -21,6 +21,11 @@ public abstract class Population<E extends Number> {
     private FunctionalCrossoverInterface crossoverInterface;
     private FunctionalMutationInterface mutationInterface;
     private FunctionalChromosomeGenerator chromosomeGenerator;
+    private FunctionalEvolutionInterface evolutionInterface;
+
+    public FunctionalEvolutionInterface getEvolutionInterface() {
+        return evolutionInterface;
+    }
 
     public FunctionalCrossoverInterface getCrossoverInterface() {
         return crossoverInterface;
@@ -66,7 +71,8 @@ public abstract class Population<E extends Number> {
             FunctionalChromosomeGenerator chromosomeGenerator,
             FunctionalSelectionInterface selectionInterface,
             FunctionalCrossoverInterface crossoverInterface,
-            FunctionalMutationInterface mutationInterface
+            FunctionalMutationInterface mutationInterface,
+            FunctionalEvolutionInterface evolutionInterface
     ) throws IllegalArgumentException {
         if (mutationRate < 0 || mutationRate >= 1 || crossoverRate < 0 || crossoverRate >= 1) {
             throw new IllegalArgumentException("mutationRate, CrossoverRate must both be <= 1 and < 0");
@@ -80,6 +86,7 @@ public abstract class Population<E extends Number> {
         this.crossoverInterface = crossoverInterface;
         this.mutationInterface = mutationInterface;
         this.chromosomeGenerator = chromosomeGenerator;
+        this.evolutionInterface = evolutionInterface;
 
         this.chromosomeList = new ArrayList<>();
         for (int i = 0; i < populationSize; i++) {
@@ -323,15 +330,28 @@ public abstract class Population<E extends Number> {
     }*/
 
 
-
     /**
-     * Abstract method evolve(), to be implemented by subclass.
+     * Evolution method defined by the evolutionInterface field.
      * The default methods evolveToMax and evolveToMin offer a good default evolve method.
      */
-    public abstract void evolve();
+    public void evolve() {
+        setChromosomeList(
+                evolutionInterface.evolve(
+                        getChromosomeList(),
+                        crossoverInterface,
+                        selectionInterface,
+                        mutationInterface,
+                        elitismRate,
+                        crossoverRate,
+                        mutationRate
+                )
+        );
+    }
+
+    ;
 
     /**
-     * Default evolve method that can be called in the child class in evolve.
+     * Default evolve FunctionalInterface that can be called in the child class in evolve.
      * Uses default selection and mutation methods.
      * Evolves the population one generation.
      * First copy over the best n Chromosomes, based on elitism ratio.  Best equals highest fitness value.
@@ -339,29 +359,34 @@ public abstract class Population<E extends Number> {
      * Lastly, we change the chromosomeList to the nextGeneration
      * Selection of Parents for crossover and mutation methods or defined in mutate() and selectParents()
      */
-    protected void evolveToMax() {
-        List<Chromosome> nextGeneration = new ArrayList<>();
-        int i = 0;
-        if(getElitismRate() > 0) {
-            i = (int) (getElitismRate() * getPopulationSize());
-            getChromosomeList().subList(getChromosomeList().size() - i, getChromosomeList().size()).forEach((c) -> nextGeneration.add(c));
-        }
-        while (i < getPopulationSize()) {
-            if (ThreadLocalRandom.current().nextFloat() <= getCrossoverRate()) { //crossover?
-                List<Chromosome> children = crossoverInterface.crossover(selectParents());
-                for (Chromosome c : children) { //add children if there is enough space in new population array
-                    if (i < getPopulationSize()) {
-                        nextGeneration.add(mutationInterface.mutate(c, mutationRate));
-                        i++;
-                    }
-                }
-            } else {
-                nextGeneration.add(mutationInterface.mutate(getChromosomeList().get(i), mutationRate));
-                i++;
+    protected static FunctionalEvolutionInterface evolveToMax() {
+        return (chromosomeList, crossoverInterface, selectionInterface, mutationInterface, elitismRate, crossoverRate, mutationRate) -> {
+            List<Chromosome> nextGeneration = new ArrayList<>();
+            int i = 0;
+            if (elitismRate > 0) {
+                i = (int) (elitismRate * chromosomeList.size());
+                chromosomeList.subList(chromosomeList.size() - i, chromosomeList.size()).forEach((c) -> nextGeneration.add(c));
             }
-        }
-        setChromosomeList(nextGeneration);
+            while (i < chromosomeList.size()) {
+                if (ThreadLocalRandom.current().nextFloat() <= crossoverRate) { //crossover?
+                    List<Chromosome> parents = new ArrayList<>();
+                    parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+                    parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
 
+                    List<Chromosome> children = crossoverInterface.crossover(parents);
+                    for (Chromosome c : children) { //add children if there is enough space in new population array
+                        if (i < chromosomeList.size()) {
+                            nextGeneration.add(mutationInterface.mutate(c, mutationRate));
+                            i++;
+                        }
+                    }
+                } else {
+                    nextGeneration.add(mutationInterface.mutate(chromosomeList.get(i), mutationRate));
+                    i++;
+                }
+            }
+            return(nextGeneration);
+        };
     }
 
     /**
@@ -371,26 +396,37 @@ public abstract class Population<E extends Number> {
      * Lastly, we change the chromosomeList to the nextGeneration
      * Selection of Parents for crossover and mutation methods or defined in mutate() and selectParents()
      */
-    protected void evolveToMin() {
-        List<Chromosome> nextGeneration = new ArrayList<>();
-        int i = (int) (getElitismRate() * getPopulationSize());
-        getChromosomeList().subList(0, i).forEach((c) -> nextGeneration.add(c));
+    public static FunctionalEvolutionInterface evolveToMin() {
+        return (chromosomeList, crossoverInterface, selectionInterface, mutationInterface, elitismRate, crossoverRate, mutationRate) -> {
+            List<Chromosome> nextGeneration = new ArrayList<>();
+            int i = (int) (elitismRate * chromosomeList.size());
+            chromosomeList.subList(0, i).forEach((c) -> nextGeneration.add(c));
 
-        while (i < getPopulationSize()) {
-            if (ThreadLocalRandom.current().nextFloat() <= getCrossoverRate()) { //crossover?
-                List<Chromosome> children = crossoverInterface.crossover(selectParents());
-                for (Chromosome c : children) { //add children if there is enough space in new population array
-                    if (i < getPopulationSize()) {
-                        nextGeneration.add(mutationInterface.mutate(c, mutationRate));
-                        i++;
+            while (i < chromosomeList.size()) {
+                if (ThreadLocalRandom.current().nextFloat() <= crossoverRate) { //crossover?
+
+                    List<Chromosome> parents = new ArrayList<>();
+                    parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+                    parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+
+                    List<Chromosome> children = crossoverInterface.crossover(parents);
+                    for (Chromosome c : children) { //add children if there is enough space in new population array
+                        if (i < chromosomeList.size()) {
+                            nextGeneration.add(mutationInterface.mutate(c, mutationRate));
+                            i++;
+                        }
                     }
+                } else {
+                    nextGeneration.add(mutationInterface.mutate(chromosomeList.get(i), mutationRate));
+                    i++;
                 }
-            } else {
-                nextGeneration.add(mutationInterface.mutate(getChromosomeList().get(i), mutationRate));
-                i++;
             }
-        }
-        setChromosomeList(nextGeneration);
+            return nextGeneration;
+        };
+    }
+
+    public static FunctionalEvolutionInterface evolveToMaxAndReplicate(float replicationPercentage) {
+
     }
 
 
@@ -436,4 +472,5 @@ public abstract class Population<E extends Number> {
         }
         return fitnessValues;
     }
+
 }
