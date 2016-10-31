@@ -1,7 +1,7 @@
 import java.util.List;
 
 /**
- * Created by yay on 24.10.2016.
+ * Created by yay on 24.10.2016.aaaa
  */
 @FunctionalInterface
 public interface FunctionalEvolutionInterface {
