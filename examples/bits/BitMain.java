@@ -156,7 +156,8 @@ public class BitMain {
                         BitPopulation.generateRandomChromosome(geneSize, setBits),
                         selectionInterfaceMap.get(selectionFunction),
                         crossoverInterfaceMap.get(crossoverFunction),
-                        mutationInterfaceMap.get(mutationFunction)
+                        mutationInterfaceMap.get(mutationFunction),
+                         evolutionInterfaceMap.get(replicationScheme)
                 ) {
                     @Override
                     public void evolve() {
@@ -204,7 +205,8 @@ public class BitMain {
                         BitPopulation.generateRandomChromosome(geneSize, setBits),
                         selectionInterfaceMap.get(selectionFunction),
                         crossoverInterfaceMap.get(crossoverFunction),
-                        mutationInterfaceMap.get(mutationFunction)
+                        mutationInterfaceMap.get(mutationFunction),
+                         evolutionInterfaceMap.get(replicationScheme)
                 );
             }
             new Thread(new GeneticProducer(maxGenerations, (double) geneSize, population, sharedBlockingQueue)).start();

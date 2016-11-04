@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.jzy3d:jzy3d-api:1.0.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jzy3d/jzy3d-api/1.0.0-SNAPSHOT/jzy3d-api-1.0.0-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jzy3d/jzy3d-api/1.0.0-SNAPSHOT/jzy3d-api-1.0.0-SNAPSHOT-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jzy3d/jzy3d-api/1.0.0-SNAPSHOT/jzy3d-api-1.0.0-SNAPSHOT-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

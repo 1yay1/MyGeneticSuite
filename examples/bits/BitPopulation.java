@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BitPopulation extends Population {
 
     public BitPopulation(String id, int populationSize, int setBits, int geneSize, float mutationRate, float crossoverRate, float elitismRate) {
-        this(id, populationSize, mutationRate, crossoverRate, elitismRate, generateRandomChromosome(geneSize, setBits), Population.tournamentSelectMax(1), Population.onePointCrossover(), flipBitMuation());
+        this(id, populationSize, mutationRate, crossoverRate, elitismRate, generateRandomChromosome(geneSize, setBits), Population.tournamentSelectMax(1), Population.onePointCrossover(), flipBitMuation(),evolveToMax() );
     }
 
     public BitPopulation(
@@ -25,9 +25,10 @@ public class BitPopulation extends Population {
             FunctionalChromosomeGenerator chromosomeGenerator,
             FunctionalSelectionInterface selectionInterface,
             FunctionalCrossoverInterface crossoverInterface,
-            FunctionalMutationInterface mutationInterface
+            FunctionalMutationInterface mutationInterface,
+            FunctionalEvolutionInterface evolutionInterface
     ) {
-        super(id, populationSize, mutationRate, crossoverRate, elitismRate, chromosomeGenerator, selectionInterface, crossoverInterface, mutationInterface);
+        super(id, populationSize, mutationRate, crossoverRate, elitismRate, chromosomeGenerator, selectionInterface, crossoverInterface, mutationInterface, evolutionInterface);
     }
 
     /**

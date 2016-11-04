@@ -426,7 +426,7 @@ public abstract class Population<E extends Number> {
     }
 
     public static FunctionalEvolutionInterface evolveToMaxAndReplicate(float replicationPercentage) {
-
+        return null;
     }
 
 

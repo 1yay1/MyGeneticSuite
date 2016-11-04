@@ -42,7 +42,7 @@ public class SalesmanPopulation extends Population {
      * Constructor for SalesmanPopulation. The id and all rates can be customized, and tournamentSize for the tournament selection.
      */
     public SalesmanPopulation(String id, int tournamentSize, int populationSize, float mutationRate, float crossoverRate, float elitismRate) {
-        super(id, populationSize, mutationRate, crossoverRate, elitismRate, generateRandomChromosome(), Population.tournamentSelectMin(tournamentSize), defaultCrossoverInterface(), defaultMutationInterface());
+        super(id, populationSize, mutationRate, crossoverRate, elitismRate, generateRandomChromosome(), Population.tournamentSelectMin(tournamentSize), defaultCrossoverInterface(), defaultMutationInterface(), evolveToMax());
         //this.tournamentSize = tournamentSize;
     }
 
@@ -56,9 +56,10 @@ public class SalesmanPopulation extends Population {
             FunctionalChromosomeGenerator chromosomeGenerator,
             FunctionalSelectionInterface selectionInterface,
             FunctionalCrossoverInterface crossoverInterface,
-            FunctionalMutationInterface mutationInterface
+            FunctionalMutationInterface mutationInterface,
+            FunctionalEvolutionInterface evolutionInterface
     ) {
-        super(id, populationSize, mutationRate, crossoverRate, elitismRate, chromosomeGenerator, selectionInterface, crossoverInterface, mutationInterface);
+        super(id, populationSize, mutationRate, crossoverRate, elitismRate, chromosomeGenerator, selectionInterface, crossoverInterface, mutationInterface, evolutionInterface);
         //this.tournamentSize = tournamentSize;
     }
 

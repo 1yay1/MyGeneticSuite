@@ -1,3 +1,5 @@
+import org.jzy3d.plot3d.builder.Mapper;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -11,7 +13,7 @@ public class SalesmanMain {
         Population p1 = new SalesmanPopulation();
         Population p2 = new SalesmanPopulation();
         
-        List<Population> populationList = new ArrayList<>();
+        List<Population> populationList = new ArrayList();
         populationList.add(p1);
         populationList.add(p2);
         GeneticDynamicCharting charting = new GeneticDynamicCharting(populationList,10000000);
