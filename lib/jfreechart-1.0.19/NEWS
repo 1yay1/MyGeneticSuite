@@ -40,7 +40,7 @@ a bug in pie label rendering).
 Bug Fixes:
 
 - BarRenderer3D now observes the 'visibleSeries' settings;
-- TimeSeriesCollection now takes xRange into account when calculating the
+- TimeSeriesCollection now takes mutationRange into account when calculating the
 range bounds;
 - added missing localisation for 'Save As' option on ChartPanel;
 - inverted SymbolAxis not displaying bands correctly;

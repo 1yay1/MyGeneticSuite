@@ -1,5 +1,8 @@
+import org.jzy3d.maths.Coord3d;
+import org.jzy3d.maths.Range;
+
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
@@ -10,9 +13,9 @@ public abstract class Population<E extends Number> {
     private static Logger LOGGER = Logger.getLogger(Population.class.getName());
 
     private int populationSize;
-    private float elitismRate;
-    private float crossoverRate;
-    private float mutationRate;
+    private double elitismRate;
+    private double crossoverRate;
+    private double mutationRate;
     private List<Chromosome> chromosomeList;
     private final String id;
 
@@ -65,9 +68,9 @@ public abstract class Population<E extends Number> {
     protected Population(
             String id,
             int populationSize,
-            float mutationRate,
-            float crossoverRate,
-            float elitismRate,
+            double mutationRate,
+            double crossoverRate,
+            double elitismRate,
             FunctionalChromosomeGenerator chromosomeGenerator,
             FunctionalSelectionInterface selectionInterface,
             FunctionalCrossoverInterface crossoverInterface,
@@ -110,7 +113,7 @@ public abstract class Population<E extends Number> {
      *
      * @return float value of the crossover rate
      */
-    public float getCrossoverRate() {
+    public double getCrossoverRate() {
         return crossoverRate;
     }
 
@@ -119,7 +122,7 @@ public abstract class Population<E extends Number> {
      *
      * @return float value of the elitismRate
      */
-    public float getElitismRate() {
+    public double getElitismRate() {
         return elitismRate;
     }
 
@@ -128,7 +131,7 @@ public abstract class Population<E extends Number> {
      *
      * @return float value of the mutation rate
      */
-    public float getMutationRate() {
+    public double getMutationRate() {
         return mutationRate;
     }
 

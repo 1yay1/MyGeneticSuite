@@ -10,8 +10,8 @@ public interface FunctionalEvolutionInterface {
             FunctionalCrossoverInterface crossoverInterface,
             FunctionalSelectionInterface selectionInterface,
             FunctionalMutationInterface mutationInterface,
-            float elitismRate,
-            float crossoverRate,
-            float mutationRate
+            double elitismRate,
+            double crossoverRate,
+            double mutationRate
     );
 }

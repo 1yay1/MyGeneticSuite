@@ -4,5 +4,5 @@
  */
 @FunctionalInterface
 public interface FunctionalMutationInterface {
-     Chromosome mutate(Chromosome c, float mutationRate);
+     Chromosome mutate(Chromosome c, double mutationRate);
 }
