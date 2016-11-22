@@ -34,8 +34,8 @@ public class SalesmanPath extends Chromosome {
         this(GeneticUtilities.getRandomPath(numberOfCities));
     }
 
-    public SalesmanPath(int numberOfCities, int mutationType) {
-        this(GeneticUtilities.getRandomPath(numberOfCities));
+    public SalesmanPath(List<Number> genes, double fitness) {
+        super(genes, fitness);
     }
 
     /**

@@ -1,5 +1,6 @@
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 
 /**
  * Created by yay on 14.10.2016.
@@ -162,6 +163,49 @@ public class SalesmanPopulation extends Population {
             return children;
         };
     }
+
+    public static FunctionalCrossoverInterface greedyCrossover() {
+        return parentChromosomeList -> {
+            final List<Number> p1 = parentChromosomeList.get(0).getGene();
+            final List<Number> p2 = parentChromosomeList.get(1).getGene();
+
+            final List<Number> childGene = new ArrayList<>();
+            childGene.add(p1.get(0));
+            double fitness = 0;
+            while (childGene.size() < p1.size()) {
+                Integer c0 = (Integer) childGene.get(childGene.size() - 1);
+                Integer c1 = (Integer) getNextCity(p1, c0);
+                Integer c2 = (Integer) getNextCity(p2, c0);
+                double d1 = City.distanceFromTo(SalesmanPopulation.getCity(c0), SalesmanPopulation.getCity(c1));
+                double d2 = City.distanceFromTo(SalesmanPopulation.getCity(c0), SalesmanPopulation.getCity(c2));
+                if (d1 <= d2) {
+                    childGene.add(c1);
+                    fitness += d1;
+                } else {
+                    childGene.add(c2);
+                    fitness += d2;
+                }
+            }
+            //round trip:
+            fitness += City.distanceFromTo(SalesmanPopulation.getCity((Integer) childGene.get(0)), SalesmanPopulation.getCity((Integer) childGene.get(childGene.size() - 1)));
+
+            List<Chromosome> temp = new ArrayList<>();
+            new ArrayList<>().add(new SalesmanPath(childGene, fitness));
+            return temp;
+        };
+    }
+
+    private static Number getNextCity(List<Number> path, Number city) {
+        Number next = null;
+        for (int i = 0; i < path.size(); i++) {
+            if (path.get(i).equals(city)) {
+                next = i == path.size() - 1 ? path.get(0) : path.get(i + 1);
+                break;
+            }
+        }
+        return next;
+    }
+
 
     /**
      * Returns the City mapped to the index in CITY_HASH_MAP

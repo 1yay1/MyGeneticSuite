@@ -1,3 +1,6 @@
+import org.jzy3d.maths.Coord2d;
+import org.jzy3d.maths.Range;
+
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.*;
@@ -10,6 +13,7 @@ public class GeneticUtilities {
 
     /**
      * Gets the private static Logger Object for the class.
+     *
      * @return LOGGER object.
      */
     public static Logger getLOGGER() {
@@ -29,19 +33,21 @@ public class GeneticUtilities {
 
     /**
      * Gets a random {@link Gene} with specified length.
+     *
      * @param length length of the {@link Gene}
      * @return new randomly filled {@link Gene}
      */
     public static Gene getRandomFixedLengthBitSet(int length) {
         BitSet bitSet = new BitSet();
-        for(int i = 0; i < length; i++) {
-            bitSet.set(i,ThreadLocalRandom.current().nextBoolean());
+        for (int i = 0; i < length; i++) {
+            bitSet.set(i, ThreadLocalRandom.current().nextBoolean());
         }
-        return new Gene(bitSet,length);
+        return new Gene(bitSet, length);
     }
 
     /**
      * Gets a random String made with chars ranging from 33-126 on the Ascii table.
+     *
      * @param length length of the String to be created
      * @return new random String.
      */
@@ -67,25 +73,27 @@ public class GeneticUtilities {
 
     /**
      * Gets a random char with the index bounds of 32-127.
+     *
      * @return random char.
      */
     private static char getRandomChar() {
-        return getRandomChar(32,127);
+        return getRandomChar(32, 127);
     }
 
     /**
      * Returns a shuffled array with n bytes from 0..maxNumer.
+     *
      * @param maxNumber
      * @return byte[maxNumer]
      */
-    public static byte[] getShuffledListOfBytes(byte maxNumber){
+    public static byte[] getShuffledListOfBytes(byte maxNumber) {
         List<Byte> numbers = new ArrayList<>();
-        for(byte i =0; i< maxNumber; i++){
+        for (byte i = 0; i < maxNumber; i++) {
             numbers.add(i);
         }
         Collections.shuffle(numbers, ThreadLocalRandom.current());
         byte byteArray[] = new byte[maxNumber];
-        for(byte i =0; i< maxNumber; i++){
+        for (byte i = 0; i < maxNumber; i++) {
             byteArray[i] = numbers.get(i).byteValue();
         }
         return byteArray;
@@ -93,12 +101,13 @@ public class GeneticUtilities {
 
     /**
      * Returns a shuffled array with n ints randomly filled with values from 0..max.
+     *
      * @param max, n
      * @return int[n]
      */
-    public static int[] getShuffledListOfInts(int max, int n){
+    public static int[] getShuffledListOfInts(int max, int n) {
         int numbers[] = new int[n];
-        for(int i = 0; i <n; i++) {
+        for (int i = 0; i < n; i++) {
             ThreadLocalRandom.current().nextInt(max);
         }
         return numbers;
@@ -107,17 +116,18 @@ public class GeneticUtilities {
 
     /**
      * Returns a shuffled array with n ints from 0..maxNumer.
+     *
      * @param maxNumber
      * @return int[maxNumber]
      */
-    public static int[] getShuffledListOfUniqueInts(int maxNumber){
+    public static int[] getShuffledListOfUniqueInts(int maxNumber) {
         List<Integer> numbers = new ArrayList<>();
-        for(int i =0; i< maxNumber; i++){
+        for (int i = 0; i < maxNumber; i++) {
             numbers.add(i);
         }
         Collections.shuffle(numbers, ThreadLocalRandom.current());
         int intArray[] = new int[maxNumber];
-        for(int i =0; i< maxNumber; i++){
+        for (int i = 0; i < maxNumber; i++) {
             intArray[i] = numbers.get(i).intValue();
         }
         return intArray;
@@ -126,6 +136,7 @@ public class GeneticUtilities {
     /**
      * Returns a shuffled array of int from 0...maxnumber. the array always starts with 0, rest is the same.
      * with n ints from 0..maxNumer.
+     *
      * @param maxNumber
      * @return int[maxNumber]
      */
@@ -140,5 +151,21 @@ public class GeneticUtilities {
         numbers.add(0);
         numbers.addAll(temp);
         return numbers;
-}
+    }
+
+
+    public static List<Coord2d> createListOfCoord2DFromRanges(Range mutationRange, Range crossoverRange, int mutationSteps, int crossoverSteps) {
+        double xstep = (double) mutationRange.getRange() / (double) (mutationSteps - 1);
+        double ystep = (double) crossoverRange.getRange() / (double) (crossoverSteps - 1);
+        List<Coord2d> coord2ds = new ArrayList(mutationSteps * crossoverSteps);
+
+        for (int xi = 0; xi < mutationSteps; ++xi) {
+            for (int yi = 0; yi < crossoverSteps; ++yi) {
+                double mutationRate = (double) mutationRange.getMin() + (double) xi * xstep;
+                double crossoverRate = (double) crossoverRange.getMin() + (double) yi * ystep;
+                coord2ds.add(new Coord2d(mutationRate, crossoverRate));
+            }
+        }
+        return coord2ds;
+    }
 }

@@ -47,7 +47,7 @@ public class BitMain {
 
         evolutionInterfaceMap = new HashMap<>();
         evolutionInterfaceMap.put(0, Population.evolveToMax());
-        evolutionInterfaceMap.put(0, Population.evolveToMaxAndReplicate(0.1f));
+        evolutionInterfaceMap.put(0, Population.evolveToMaxAndReplicate());
 
 
     }
@@ -73,7 +73,6 @@ public class BitMain {
             printHelp();
             System.exit(0);
         }
-        int m = 0;
         StringBuilder sb = new StringBuilder();
         sb.append("**********************\n");
         try {

@@ -428,8 +428,42 @@ public abstract class Population<E extends Number> {
         };
     }
 
-    public static FunctionalEvolutionInterface evolveToMaxAndReplicate(float replicationPercentage) {
-        return null;
+    public static FunctionalEvolutionInterface evolveToMaxAndReplicate() {
+        return (chromosomeList, crossoverInterface, selectionInterface, mutationInterface, elitismRate, crossoverRate, mutationRate) -> {
+            List<Chromosome> nextGeneration = new ArrayList<>();
+            int i = 0;
+            if (elitismRate > 0) {
+                i = (int) (elitismRate * chromosomeList.size());
+                chromosomeList.subList(chromosomeList.size() - i, chromosomeList.size()).forEach((c) -> nextGeneration.add(c));
+            }
+            while (i < chromosomeList.size()) {
+                if (ThreadLocalRandom.current().nextFloat() <= crossoverRate) { //crossover?
+                    List<Chromosome> parents = new ArrayList<>();
+                    parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+                    parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+
+                    List<Chromosome> children = crossoverInterface.crossover(parents);
+                    for (Chromosome c : children) { //add children if there is enough space in new population array
+                        if (i < chromosomeList.size()) {
+                            nextGeneration.add(mutationInterface.mutate(c, mutationRate));
+                            i++;
+                        }
+                    }
+                } else {
+                    nextGeneration.add(mutationInterface.mutate(chromosomeList.get(i), mutationRate));
+                    i++;
+                }
+            }
+            List<Chromosome> nextGenerationReplicated = new ArrayList<>();
+            Collections.sort(nextGeneration);
+            Collections.reverse(nextGeneration);
+            for(int j = 0; j< nextGeneration.size()/10; j++) {
+                for(int k = 0; k < 10; k++) {
+                    nextGenerationReplicated.add(nextGeneration.get(j));
+                }
+            }
+            return(nextGenerationReplicated);
+        };
     }
 
 

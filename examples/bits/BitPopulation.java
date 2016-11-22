@@ -1,11 +1,15 @@
+import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.maths.Range;
+import org.omg.CORBA.SystemException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Subclass of Population.
@@ -17,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BitPopulation extends Population {
 
     public BitPopulation(String id, int populationSize, int setBits, int geneSize, double mutationRate, double crossoverRate, double elitismRate) {
-        this(id, populationSize, mutationRate, crossoverRate, elitismRate, generateRandomChromosome(geneSize, setBits), Population.tournamentSelectMax(1), Population.onePointCrossover(), flipBitMuation(), evolveToMax());
+        this(id, populationSize, mutationRate, crossoverRate, elitismRate, generateRandomChromosome(geneSize, setBits), Population.tournamentSelectMax(3), Population.onePointCrossover(), flipBitMuation(), evolveToMaxAndReplicate());
     }
 
     public BitPopulation(
@@ -47,10 +51,6 @@ public class BitPopulation extends Population {
     /**
      * Default call to evolveToMax()
      */
-    @Override
-    public void evolve() {
-        evolveToMax();
-    }
 
     /**
      * Mutation flips random bits with a chance equal to mutationRate parameter.
@@ -121,28 +121,33 @@ public class BitPopulation extends Population {
         return new BitPopulation(null, populationSize, mutationRate, crossoverRate, elitismRate, chromosomeGenerator, selectionInterface, crossoverInterface, mutationInterface, evolutionInterface);
     }
 
-    public static MultiThreadCoord3DCallable createtMultiThreadCoord3DCallable(int runs, Range mutationRange, Range crossoverRange, int mutationSteps, int crossoverSteps, int maxGenerations, double maxFitness) {
+    public static MultiThreadCoord3DCallable createMultiThreadCoord3DCallable(
+            int runs,
+            Range mutationRange,
+            Range crossoverRange,
+            int mutationSteps,
+            int crossoverSteps,
+            int maxGenerations,
+            double maxFitness
+    ) {
         return new MultiThreadCoord3DCallable(runs, mutationRange, crossoverRange, mutationSteps, crossoverSteps) {
             @Override
             protected Callable<Coord3d> createPopulationRunsCallable(double mutationRate, double crossoverRate) {
-                return new Callable<Coord3d>() {
-                    @Override
-                    public Coord3d call() throws Exception {
-                        double generationSum = 0;
-                        for (int i = 0; i < getRuns(); i++) {
-                            int currentGen = 0;
-                            Population population = createPopulationForMultiThreadCoord3DCallable(
-                                    mutationRate,
-                                    crossoverRate
-                            );
-                            while (currentGen < maxGenerations && population.getMaxFittest().getFitness() < maxFitness) {
-                                population.evolve();
-                                currentGen++;
-                            }
-                            generationSum += currentGen;
+                return () -> {
+                    double generationSum = 0;
+                    for (int i = 0; i < getRuns(); i++) {
+                        int currentGen = 0;
+                        Population population = createPopulationForMultiThreadCoord3DCallable(
+                                mutationRate,
+                                crossoverRate
+                        );
+                        while (currentGen < maxGenerations && population.getMaxFittest().getFitness() < maxFitness) {
+                            population.evolve();
+                            currentGen++;
                         }
-                        return new Coord3d(mutationRate, crossoverRate, generationSum / runs);
+                        generationSum += currentGen;
                     }
+                    return new Coord3d(mutationRate, crossoverRate, generationSum / getRuns());
                 };
             }
         };
@@ -157,7 +162,7 @@ public class BitPopulation extends Population {
             int maxGenerations,
             double maxFitness,
             int populationSize,
-            int elitismRate,
+            double elitismRate,
             FunctionalChromosomeGenerator chromosomeGenerator,
             FunctionalSelectionInterface selectionInterface,
             FunctionalCrossoverInterface crossoverInterface,
@@ -167,35 +172,108 @@ public class BitPopulation extends Population {
         return new MultiThreadCoord3DCallable(runs, mutationRange, crossoverRange, mutationSteps, crossoverSteps) {
             @Override
             protected Callable<Coord3d> createPopulationRunsCallable(double mutationRate, double crossoverRate) {
-                return new Callable<Coord3d>() {
-                    @Override
-                    public Coord3d call() throws Exception {
-                        double generationSum = 0;
-                        for (int i = 0; i < getRuns(); i++) {
-                            int currentGen = 0;
+                return () -> {
+                    double generationSum = 0;
+                    for (int i = 0; i < getRuns(); i++) {
+                        int currentGen = 0;
+                        Population population = createPopulationForMultiThreadCoord3DCallable(
+                                populationSize,
+                                mutationRate,
+                                crossoverRate,
+                                elitismRate,
+                                chromosomeGenerator,
+                                selectionInterface,
+                                crossoverInterface,
+                                mutationInterface,
+                                evolutionInterface
+                        );
 
-                            Population population = createPopulationForMultiThreadCoord3DCallable(
-                                    populationSize,
-                                    mutationRate,
-                                    crossoverRate,
-                                    elitismRate,
-                                    chromosomeGenerator,
-                                    selectionInterface,
-                                    crossoverInterface,
-                                    mutationInterface,
-                                    evolutionInterface
-                            );
-
-                            while (currentGen < maxGenerations && population.getMaxFittest().getFitness() < maxFitness) {
-                                population.evolve();
-                                currentGen++;
-                            }
-                            generationSum += currentGen;
+                        while (currentGen < maxGenerations && population.getMaxFittest().getFitness() < maxFitness) {
+                            population.evolve();
+                            currentGen++;
                         }
-                        return new Coord3d(mutationRate, crossoverRate, generationSum / runs);
+                        generationSum += currentGen;
                     }
+                    return new Coord3d(mutationRate, crossoverRate, generationSum / runs);
                 };
             }
         };
     }
+
+    public static List<Coord3d> createCoord3DList(
+            int runs,
+            Range mutationRange,
+            Range crossoverRange,
+            int mutationSteps,
+            int crossoverSteps,
+            int maxGenerations,
+            double maxFitness) {
+        return createCoord3dList(
+                runs,
+                mutationRange,
+                crossoverRange,
+                mutationSteps,
+                crossoverSteps,
+                maxGenerations,
+                maxFitness,
+                200,
+                0.01,
+                generateRandomChromosome(200, 5),
+                tournamentSelectMax(3),
+                onePointCrossover(),
+                flipBitMuation(),
+                evolveToMaxAndReplicate()
+        );
+    }
+
+    public static List<Coord3d> createCoord3dList(
+            int runs,
+            Range mutationRange,
+            Range crossoverRange,
+            int mutationSteps,
+            int crossoverSteps,
+            int maxGenerations,
+            double maxFitness,
+            int populationSize,
+            double elitismRate,
+            FunctionalChromosomeGenerator chromosomeGenerator,
+            FunctionalSelectionInterface selectionInterface,
+            FunctionalCrossoverInterface crossoverInterface,
+            FunctionalMutationInterface mutationInterface,
+            FunctionalEvolutionInterface evolutionInterface) {
+        final AtomicInteger counter = new AtomicInteger();
+
+        return GeneticUtilities.createListOfCoord2DFromRanges(mutationRange, crossoverRange, mutationSteps, crossoverSteps)
+                .stream()
+                .map((c) -> {
+                    double mutationRate = c.x;
+                    double crossoverRate = c.y;
+                    double generationSum = 0;
+                    for (int i = 0; i < runs; i++) {
+                        Population population = new BitPopulation(
+                                null,
+                                populationSize,
+                                mutationRate,
+                                crossoverRate,
+                                elitismRate,
+                                chromosomeGenerator,
+                                selectionInterface,
+                                crossoverInterface,
+                                mutationInterface,
+                                evolutionInterface);
+                        int currentGen = 0;
+                        while (currentGen < maxGenerations && population.getMaxFittest().getFitness() < maxFitness) {
+                            population.evolve();
+                            currentGen++;
+                        }
+                        generationSum += currentGen;
+                    }
+                    System.out.println(counter.addAndGet(1) + ":" + c.x + "/" + c.y + "/" + (float) generationSum / runs);
+
+                    return new Coord3d(c, (float) generationSum / runs);
+                })
+                .sorted((o1, o2) -> o1.x == o2.x ? (o1.y > o2.y ? 1 : o1.y == o2.y ? 0 : -1) : (o1.x > o2.x ? 1 : -1))
+                .collect(Collectors.toList());
+    }
+
 }

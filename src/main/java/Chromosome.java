@@ -21,6 +21,11 @@ public abstract class Chromosome implements Comparable<Chromosome> {
         this.fitness = calculateFitness();
     }
 
+    public Chromosome(List<Number> gene, double fitness) {
+        this.gene = gene;
+        this.fitness = fitness;
+    }
+
     /**
      * @return Reference to this gene.
      */
@@ -51,6 +56,13 @@ public abstract class Chromosome implements Comparable<Chromosome> {
      */
     protected abstract double calculateFitness();
 
+    public void setGene(List<Number> gene) {
+        this.gene = gene;
+    }
+
+    public void setFitness(double fitness) {
+        this.fitness = fitness;
+    }
 
     /**
      * compareTo method of Interface Comparable.
