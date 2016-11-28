@@ -1,6 +1,9 @@
 import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Range;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.*;
@@ -155,14 +158,16 @@ public class GeneticUtilities {
 
 
     public static List<Coord2d> createListOfCoord2DFromRanges(Range mutationRange, Range crossoverRange, int mutationSteps, int crossoverSteps) {
-        double xstep = (double) mutationRange.getRange() / (double) (mutationSteps - 1);
-        double ystep = (double) crossoverRange.getRange() / (double) (crossoverSteps - 1);
+
+        final float xstep =  mutationRange.getRange() /  (mutationSteps - 1);
+        final float ystep =  crossoverRange.getRange() /  (crossoverSteps - 1);
+
         List<Coord2d> coord2ds = new ArrayList(mutationSteps * crossoverSteps);
 
         for (int xi = 0; xi < mutationSteps; ++xi) {
             for (int yi = 0; yi < crossoverSteps; ++yi) {
-                double mutationRate = (double) mutationRange.getMin() + (double) xi * xstep;
-                double crossoverRate = (double) crossoverRange.getMin() + (double) yi * ystep;
+                float mutationRate = (float) (mutationRange.getMin() +  xi * xstep);
+                float crossoverRate = (float) (crossoverRange.getMin() +  yi * ystep);
                 coord2ds.add(new Coord2d(mutationRate, crossoverRate));
             }
         }

@@ -1,6 +1,3 @@
-import org.jzy3d.maths.Coord3d;
-import org.jzy3d.maths.Range;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
@@ -76,10 +73,7 @@ public abstract class Population<E extends Number> {
             FunctionalCrossoverInterface crossoverInterface,
             FunctionalMutationInterface mutationInterface,
             FunctionalEvolutionInterface evolutionInterface
-    ) throws IllegalArgumentException {
-        if (mutationRate < 0 || mutationRate >= 1 || crossoverRate < 0 || crossoverRate >= 1) {
-            throw new IllegalArgumentException("mutationRate, CrossoverRate must both be <= 1 and < 0");
-        }
+    ) {
         this.id = id;
         this.populationSize = populationSize;
         this.mutationRate = mutationRate;
@@ -164,8 +158,7 @@ public abstract class Population<E extends Number> {
     }
 
     public static Chromosome getMaxFittest(List<Chromosome> chromosomeList) {
-        Collections.sort(chromosomeList);
-        return chromosomeList.get(chromosomeList.size() - 1);
+        return Collections.max(chromosomeList);
     }
 
     /**
@@ -284,6 +277,34 @@ public abstract class Population<E extends Number> {
         };
     }
 
+    public static FunctionalReplicationInterface replicationInterfaceTournament(int tournamentSize) {
+        return chromosomeList1 -> {
+            List<Chromosome> nextGeneration = new ArrayList<>();
+
+            while (nextGeneration.size() < chromosomeList1.size()) {
+                List<Chromosome> candidates = new ArrayList<>();
+                for (int i = 0; i < tournamentSize; i++) {
+                    candidates.add(chromosomeList1.get(ThreadLocalRandom.current().nextInt(chromosomeList1.size())));
+                }
+                nextGeneration.add(candidates.stream().max((c1, c2) -> c1.compareTo(c2)).get());
+            }
+            return nextGeneration;
+        };
+    }
+
+
+    public static FunctionalSelectionInterface rankBasedSelectMax(List<Double> cumulativeRankList) {
+        return chromosomeList1 -> {
+            final double select = ThreadLocalRandom.current().nextDouble();
+            for (int i = 0; i < chromosomeList1.size(); i++) {
+                if (select <= cumulativeRankList.get(i)) {
+                    return i;
+                }
+            }
+            return 0;
+        };
+    }
+
 
     public static FunctionalCrossoverInterface onePointCrossover() {
         return parentChromosomeList -> {
@@ -351,7 +372,14 @@ public abstract class Population<E extends Number> {
         );
     }
 
-    ;
+    public int evolveLoop(double maxFitness, int maxGenertaions) {
+        int currentGeneration = 0;
+        while (getMaxFittest().getFitness() < maxFitness && currentGeneration < maxGenertaions) {
+            evolve();
+            currentGeneration++;
+        }
+        return currentGeneration;
+    }
 
     /**
      * Default evolve FunctionalInterface that can be called in the child class in evolve.
@@ -365,11 +393,13 @@ public abstract class Population<E extends Number> {
     protected static FunctionalEvolutionInterface evolveToMax() {
         return (chromosomeList, crossoverInterface, selectionInterface, mutationInterface, elitismRate, crossoverRate, mutationRate) -> {
             List<Chromosome> nextGeneration = new ArrayList<>();
-            int i = 0;
+            List<Chromosome> protectedChromosomes = new ArrayList<>();
+            int idx = 0;
             if (elitismRate > 0) {
-                i = (int) (elitismRate * chromosomeList.size());
-                chromosomeList.subList(chromosomeList.size() - i, chromosomeList.size()).forEach((c) -> nextGeneration.add(c));
+                idx = (int) (elitismRate * chromosomeList.size());
+                chromosomeList.subList(chromosomeList.size() - idx, chromosomeList.size()).forEach((c) -> protectedChromosomes.add(c));
             }
+            int i = 0;
             while (i < chromosomeList.size()) {
                 if (ThreadLocalRandom.current().nextFloat() <= crossoverRate) { //crossover?
                     List<Chromosome> parents = new ArrayList<>();
@@ -379,16 +409,24 @@ public abstract class Population<E extends Number> {
                     List<Chromosome> children = crossoverInterface.crossover(parents);
                     for (Chromosome c : children) { //add children if there is enough space in new population array
                         if (i < chromosomeList.size()) {
-                            nextGeneration.add(mutationInterface.mutate(c, mutationRate));
+                            List<Chromosome> temp = new ArrayList<>();
+                            temp.add(c);
+                            nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
                             i++;
                         }
                     }
                 } else {
-                    nextGeneration.add(mutationInterface.mutate(chromosomeList.get(i), mutationRate));
+                    List<Chromosome> temp = new ArrayList<>();
+                    temp.add(chromosomeList.get(ThreadLocalRandom.current().nextInt(chromosomeList.size())));
+                    nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
                     i++;
                 }
             }
-            return(nextGeneration);
+            Collections.sort(nextGeneration);
+            if (protectedChromosomes.size() != 0) {
+                IntStream.range(0, protectedChromosomes.size()).forEach((j) -> nextGeneration.set(j, protectedChromosomes.get(j)));
+            }
+            return (nextGeneration);
         };
     }
 
@@ -415,20 +453,145 @@ public abstract class Population<E extends Number> {
                     List<Chromosome> children = crossoverInterface.crossover(parents);
                     for (Chromosome c : children) { //add children if there is enough space in new population array
                         if (i < chromosomeList.size()) {
-                            nextGeneration.add(mutationInterface.mutate(c, mutationRate));
+                            List<Chromosome> temp = new ArrayList<>();
+                            temp.add(c);
+                            nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
                             i++;
                         }
                     }
                 } else {
-                    nextGeneration.add(mutationInterface.mutate(chromosomeList.get(i), mutationRate));
+                    List<Chromosome> temp = new ArrayList<>();
+                    temp.add(chromosomeList.get(ThreadLocalRandom.current().nextInt(chromosomeList.size())));
+                    nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
                     i++;
+
                 }
             }
             return nextGeneration;
         };
     }
 
-    public static FunctionalEvolutionInterface evolveToMaxAndReplicate() {
+    public static FunctionalEvolutionInterface evolveToMaxAndTournamentReplicate(int tournamentSize) {
+        return (chromosomeList, crossoverInterface, selectionInterface, mutationInterface, elitismRate, crossoverRate, mutationRate) -> {
+            List<Chromosome> nextGeneration = new ArrayList<>();
+            int idx = 0;
+            List<Chromosome> protectedChromosomes = new ArrayList<>();
+            if (elitismRate > 0) {
+                idx = (int) (elitismRate * chromosomeList.size());
+                chromosomeList.subList(chromosomeList.size() - idx, chromosomeList.size()).forEach((c) -> protectedChromosomes.add(c));
+            }
+            int i = 0;
+            int max = (int) (chromosomeList.size() * crossoverRate);
+            while (i < max) {
+                //if (ThreadLocalRandom.current().nextFloat() <= crossoverRate) { //crossover?
+                List<Chromosome> parents = new ArrayList<>();
+                parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+                parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+
+                List<Chromosome> children = crossoverInterface.crossover(parents);
+                for (Chromosome c : children) { //add children if there is enough space in new population array
+                    if (i < max) {
+                        List<Chromosome> temp = new ArrayList<>();
+                        temp.add(c);
+                        nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
+                        i++;
+                    }
+                }
+                //} else {
+                //}
+            }
+            while (nextGeneration.size() < chromosomeList.size()) {
+                List<Chromosome> temp = new ArrayList<>();
+                temp.add(chromosomeList.get(ThreadLocalRandom.current().nextInt(chromosomeList.size())));
+                nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
+            }
+            List<Chromosome> nextGenerationReplicated = replicationInterfaceTournament(tournamentSize).replicate(nextGeneration);
+            Collections.sort(nextGeneration);
+            //System.out.println(nextGeneration.size() + ":" + protectedChromosomes.size());
+            if (protectedChromosomes.size() != 0) {
+                IntStream.range(0, protectedChromosomes.size()).forEach((j) -> nextGeneration.set(j, protectedChromosomes.get(j)));
+            }
+            return nextGenerationReplicated;
+        };
+    }
+
+    public static FunctionalEvolutionInterface evolveToMaxAndRankBasedReplicate(double s) {
+        return (chromosomeList, crossoverInterface, selectionInterface, mutationInterface, elitismRate, crossoverRate, mutationRate) -> {
+            List<Chromosome> nextGeneration = new ArrayList<>();
+            int idx = 0;
+            List<Chromosome> protectedChromosomes = new ArrayList<>();
+            if (elitismRate > 0) {
+                idx = (int) (elitismRate * chromosomeList.size());
+                chromosomeList.subList(chromosomeList.size() - idx, chromosomeList.size()).forEach((c) -> protectedChromosomes.add(c));
+            }
+            int i = 0;
+            int max = (int) (chromosomeList.size() * crossoverRate);
+            while (i < max) {
+                //if (ThreadLocalRandom.current().nextFloat() <= crossoverRate) { //crossover?
+                List<Chromosome> parents = new ArrayList<>();
+                parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+                parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+
+                List<Chromosome> children = crossoverInterface.crossover(parents);
+                for (Chromosome c : children) { //add children if there is enough space in new population array
+                    if (i < max) {
+                        List<Chromosome> temp = new ArrayList<>();
+                        temp.add(c);
+                        nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
+                        i++;
+                    }
+                }
+                //} else {
+                //}
+            }
+            while (nextGeneration.size() < chromosomeList.size()) {
+                List<Chromosome> temp = new ArrayList<>();
+                temp.add(chromosomeList.get(ThreadLocalRandom.current().nextInt(chromosomeList.size())));
+                nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
+            }
+            List<Chromosome> nextGenerationReplicated = new ArrayList<>();
+            Collections.sort(nextGeneration);
+            List<Double> rankSelectionList = getRankSelectionList(nextGeneration, s);
+            while (nextGenerationReplicated.size() < nextGeneration.size()) {
+                double select = ThreadLocalRandom.current().nextDouble();
+                for (int j = 0; j < nextGeneration.size(); j++) {
+                    if (select <= rankSelectionList.get(j)) {
+                        nextGenerationReplicated.add(nextGeneration.get(j));
+                        break;
+                    }
+                }
+            }
+            Collections.sort(nextGeneration);
+            //System.out.println(nextGeneration.size() + ":" + protectedChromosomes.size());
+            if (protectedChromosomes.size() != 0) {
+                IntStream.range(0, protectedChromosomes.size()).forEach((j) -> nextGeneration.set(j, protectedChromosomes.get(j)));
+            }
+            return nextGenerationReplicated;
+        };
+    }
+
+    public static List<Double> getRankSelectionList(List<Chromosome> chromosomeList, double s) {
+        /*
+           n = ngenes
+           s = s
+           r = rank
+           ps[gen] =  ((2 - s) / n) + ((2 * r * (s - 1)) / (n * (n - 1)))
+           pskum[gen]+= ps
+        */
+        final List<Double> cumulativeChanceList = new ArrayList<>();
+        double cumulativeChance = 0;
+        int n = chromosomeList.size();
+        for (int r = 0; r < n; r++) {
+            double chance = ((2 - s) / n) + ((2 * r * (s - 1)) / (n * (n - 1)));
+            cumulativeChance += chance;
+            cumulativeChanceList.add(cumulativeChance);
+        }
+        //System.out.println("Lowest: " + cumulativeChanceList.get(0) + " Highest: " + cumulativeChanceList.get(cumulativeChanceList.size()-1));
+        return cumulativeChanceList;
+    }
+
+
+    public static FunctionalEvolutionInterface evolveToMaxAnd10x10Replicate() {
         return (chromosomeList, crossoverInterface, selectionInterface, mutationInterface, elitismRate, crossoverRate, mutationRate) -> {
             List<Chromosome> nextGeneration = new ArrayList<>();
             int i = 0;
@@ -436,33 +599,47 @@ public abstract class Population<E extends Number> {
                 i = (int) (elitismRate * chromosomeList.size());
                 chromosomeList.subList(chromosomeList.size() - i, chromosomeList.size()).forEach((c) -> nextGeneration.add(c));
             }
-            while (i < chromosomeList.size()) {
-                if (ThreadLocalRandom.current().nextFloat() <= crossoverRate) { //crossover?
-                    List<Chromosome> parents = new ArrayList<>();
-                    parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
-                    parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+            int max = (int) (chromosomeList.size() * crossoverRate);
+            while (i < max) {
+                //if (ThreadLocalRandom.current().nextFloat() <= crossoverRate) { //crossover?
+                List<Chromosome> parents = new ArrayList<>();
+                parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
+                parents.add(chromosomeList.get(selectionInterface.select(chromosomeList)));
 
-                    List<Chromosome> children = crossoverInterface.crossover(parents);
-                    for (Chromosome c : children) { //add children if there is enough space in new population array
-                        if (i < chromosomeList.size()) {
-                            nextGeneration.add(mutationInterface.mutate(c, mutationRate));
-                            i++;
+                List<Chromosome> children = crossoverInterface.crossover(parents);
+                for (Chromosome c : children) { //add children if there is enough space in new population array
+                    if (i < max) {
+                        if (mutationRate > 0) {
+                            List<Chromosome> temp = new ArrayList<>();
+                            temp.add(c);
+                            nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
+                        } else {
+                            nextGeneration.add(c);
                         }
+                        i++;
                     }
+                }
+                //} else {
+                //}
+            }
+            while (nextGeneration.size() < chromosomeList.size()) {
+                if (mutationRate > 0) {
+                    List<Chromosome> temp = new ArrayList<>();
+                    temp.add(chromosomeList.get(ThreadLocalRandom.current().nextInt(chromosomeList.size())));
+                    nextGeneration.add(mutationInterface.mutate(temp, mutationRate).get(0));
                 } else {
-                    nextGeneration.add(mutationInterface.mutate(chromosomeList.get(i), mutationRate));
-                    i++;
+                    nextGeneration.add(chromosomeList.get(ThreadLocalRandom.current().nextInt(chromosomeList.size())));
                 }
             }
             List<Chromosome> nextGenerationReplicated = new ArrayList<>();
             Collections.sort(nextGeneration);
             Collections.reverse(nextGeneration);
-            for(int j = 0; j< nextGeneration.size()/10; j++) {
-                for(int k = 0; k < 10; k++) {
+            for (int j = 0; j < nextGeneration.size() / 10; j++) {
+                for (int k = 0; k < 10; k++) {
                     nextGenerationReplicated.add(nextGeneration.get(j));
                 }
             }
-            return(nextGenerationReplicated);
+            return (nextGenerationReplicated);
         };
     }
 

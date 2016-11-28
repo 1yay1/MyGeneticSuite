@@ -4,18 +4,12 @@ import org.jzy3d.chart.ChartLauncher;
 import org.jzy3d.colors.Color;
 import org.jzy3d.colors.ColorMapper;
 import org.jzy3d.colors.colormaps.ColorMapRainbow;
-import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.maths.Range;
-import org.jzy3d.plot3d.builder.Builder;
-import org.jzy3d.plot3d.builder.concrete.OrthonormalGrid;
 import org.jzy3d.plot3d.builder.concrete.OrthonormalTessellator;
 import org.jzy3d.plot3d.primitives.Shape;
 import org.jzy3d.plot3d.rendering.canvas.Quality;
-import org.jzy3d.plot3d.text.DrawableTextWrapper;
-import org.jzy3d.plot3d.text.drawable.DrawableTextBillboard;
 import org.jzy3d.plot3d.text.drawable.DrawableTextBitmap;
-import org.jzy3d.plot3d.text.drawable.DrawableTextTexture;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,8 +42,8 @@ public class GraphicalBitMain {
 
         mutationInterfaceMap = new HashMap<>();
         mutationInterfaceNameMap = new HashMap<>();
-        mutationInterfaceMap.put(0, BitPopulation.flipBitMuation());
-        mutationInterfaceNameMap.put(mutationInterfaceMap.get(0), "FlipBitMutation");
+        mutationInterfaceMap.put(0, BitPopulation.swapMutation());
+        mutationInterfaceNameMap.put(mutationInterfaceMap.get(0), "SwapMutation");
 
         selectionInterfaceMap = new HashMap<>();
         selectionInterfaceNameMap = new HashMap<>();
@@ -68,8 +62,14 @@ public class GraphicalBitMain {
         evolutionInterfaceNameMap = new HashMap<>();
         evolutionInterfaceMap.put(0, Population.evolveToMax());
         evolutionInterfaceNameMap.put(evolutionInterfaceMap.get(0), "EvolveToMax");
-        evolutionInterfaceMap.put(1, Population.evolveToMaxAndReplicate());
-        evolutionInterfaceNameMap.put(evolutionInterfaceMap.get(1), "EvolveToMaxAndReplicate");
+        evolutionInterfaceMap.put(1, Population.evolveToMaxAnd10x10Replicate());
+        evolutionInterfaceNameMap.put(evolutionInterfaceMap.get(1), "EvolveToMaxAndReplicate10x10");
+        evolutionInterfaceMap.put(2, Population.evolveToMaxAndRankBasedReplicate(2));
+        evolutionInterfaceNameMap.put(evolutionInterfaceMap.get(2), "EvolveToMaxAndRankBasedReplicate(2)");
+        evolutionInterfaceMap.put(3, Population.evolveToMaxAndTournamentReplicate(3));
+        evolutionInterfaceNameMap.put(evolutionInterfaceMap.get(3), "EvolveToMaxAndTournamentReplicate(3)");
+        evolutionInterfaceMap.put(4, Population.evolveToMaxAndTournamentReplicate(5));
+        evolutionInterfaceNameMap.put(evolutionInterfaceMap.get(4), "EvolveToMaxAndTournamentReplicate(5)");
     }
 
 
@@ -135,7 +135,7 @@ public class GraphicalBitMain {
                     maxGenerations = Integer.parseInt(args[i + 1]);
                     sb.append("maxGenerations = " + maxGenerations);
                     sb.append("\n");
-                }  else if (args[i].toLowerCase().equals("-cf") || args[i].toLowerCase().equals("-crossoverfunction")) { //mutation rate
+                } else if (args[i].toLowerCase().equals("-cf") || args[i].toLowerCase().equals("-crossoverfunction")) { //mutation rate
                     crossoverInterface = crossoverInterfaceMap.get(Integer.parseInt(args[i + 1]));
                     sb.append("crossoverFunction = " + Integer.parseInt(args[i + 1]));
                     sb.append("\n");
@@ -174,7 +174,7 @@ public class GraphicalBitMain {
                 crossoverSteps,
                 maxGenerations,
                 geneSize,
-                geneSize,
+                populationSize,
                 elitismRate,
                 BitPopulation.generateRandomChromosome(geneSize, setBits),
                 selectionInterface,
@@ -197,6 +197,10 @@ public class GraphicalBitMain {
                 .min((o1, o2) -> o1.z > o2.z ? 1 : o1.z < o2.y ? -1 : 0)
                 .get();
 
+        Coord3d maxRunsCoord3D = coord3dList.stream()
+                .max((o1, o2) -> o1.z > o2.z ? 1 : o1.z < o2.y ? -1 : 0)
+                .get();
+
         /*sb = new StringBuilder();
         sb.append("Best with: ");
         sb.append("Mutation Rate: ");
@@ -215,7 +219,7 @@ public class GraphicalBitMain {
         float bestMutation = lowestRunsCoord3D.x;
         float bestCrossover = lowestRunsCoord3D.y;
         float bestGeneration = lowestRunsCoord3D.z;
-        float time = (end - start) / 100;
+        float time = (end - start) / 1000;
         String elitismString = Double.toString(elitismRate);
         String crossoverString = crossoverInterfaceNameMap.get(crossoverInterface);
         String mutationString = mutationInterfaceNameMap.get(mutationInterface);
@@ -223,19 +227,22 @@ public class GraphicalBitMain {
         String replicationString = evolutionInterfaceNameMap.get(evolutionInterface);
 
         final Chart chart = new AWTChart(Quality.Advanced);
-        getListOfDrawableTextBitmap( bestMutation,
-         bestCrossover,
-         bestGeneration,
-         time,
-         elitismString,
-         crossoverString,
-         mutationString,
-         selectionString,
-         replicationString).forEach((dtb) -> {
+        chart.getScene().getGraph().add(surface);
+
+
+        getListOfDrawableTextBitmap(
+                maxRunsCoord3D.z,
+                bestMutation,
+                bestCrossover,
+                bestGeneration,
+                time,
+                elitismString,
+                crossoverString,
+                mutationString,
+                selectionString,
+                replicationString).forEach((dtb) -> {
             chart.getScene().getGraph().add(dtb);
         });
-
-        chart.getScene().getGraph().add(surface);
 
 
         chart.getAxeLayout().setXAxeLabel("Mutation rate");
@@ -308,6 +315,7 @@ public class GraphicalBitMain {
     }
 
     static private List<DrawableTextBitmap> getListOfDrawableTextBitmap(
+            float baseZ,
             float bestMutation,
             float bestCrossover,
             float bestGeneration,
@@ -317,17 +325,15 @@ public class GraphicalBitMain {
             String mutationString,
             String selectionString,
             String replicationString
-            ) {
+    ) {
         final int baseX = 0;
-        final int baseY = 0;
-        final int baseZ = 100;
+        final int baseY = 2;
         int zOffset = 0;
 
         List<DrawableTextBitmap> drawableTextBitmapList = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        sb.append("Best with: ");
         drawableTextBitmapList.add(new DrawableTextBitmap(sb.toString(), new Coord3d(baseX, baseY, baseZ + zOffset), Color.MAGENTA));
-        zOffset-=10;
+        zOffset -= baseZ/6;
 
         sb.append("Mutation Rate: ");
         sb.append(bestMutation);
@@ -342,7 +348,7 @@ public class GraphicalBitMain {
         sb.append(" ");
 
         drawableTextBitmapList.add(new DrawableTextBitmap(sb.toString(), new Coord3d(baseX, baseY, baseZ + zOffset), Color.MAGENTA));
-        zOffset-=10;
+        zOffset -= baseZ/6;
 
         sb = new StringBuilder();
         sb.append("Time: ");
@@ -359,7 +365,7 @@ public class GraphicalBitMain {
         sb.append(" ");
 
         drawableTextBitmapList.add(new DrawableTextBitmap(sb.toString(), new Coord3d(baseX, baseY, baseZ + zOffset), Color.MAGENTA));
-        zOffset-=10;
+        zOffset -= baseZ/6;
 
         sb = new StringBuilder();
         sb.append("Mutation: ");
@@ -376,7 +382,7 @@ public class GraphicalBitMain {
 
         drawableTextBitmapList.add(new DrawableTextBitmap(sb.toString(), new Coord3d(baseX, baseY, baseZ + zOffset), Color.MAGENTA));
 
-        return  drawableTextBitmapList;
+        return drawableTextBitmapList;
     }
 }
 

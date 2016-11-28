@@ -1,15 +1,15 @@
-import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.maths.Range;
-import org.omg.CORBA.SystemException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Subclass of Population.
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class BitPopulation extends Population {
 
     public BitPopulation(String id, int populationSize, int setBits, int geneSize, double mutationRate, double crossoverRate, double elitismRate) {
-        this(id, populationSize, mutationRate, crossoverRate, elitismRate, generateRandomChromosome(geneSize, setBits), Population.tournamentSelectMax(3), Population.onePointCrossover(), flipBitMuation(), evolveToMaxAndReplicate());
+        this(id, populationSize, mutationRate, crossoverRate, elitismRate, generateRandomChromosome(geneSize, setBits), Population.tournamentSelectMax(3), Population.onePointCrossover(), flipBitMutation(), evolveToMaxAnd10x10Replicate());
     }
 
     public BitPopulation(
@@ -57,17 +57,37 @@ public class BitPopulation extends Population {
      *
      * @return
      */
-    public static FunctionalMutationInterface flipBitMuation() {
-        return (c, mutationRate) -> {
-            final List<Number> newGene = c.getGene();
-            for (int i = 0; i < c.getGene().size(); i++) {
+    public static FunctionalMutationInterface flipBitMutation() {
+        return (chromosomeList, mutationRate) -> {
+            final List<Number> newGene = chromosomeList.get(0).getGene();
+            for (int i = 0; i < chromosomeList.get(0).getGene().size(); i++) {
                 if (ThreadLocalRandom.current().nextFloat() < mutationRate) {
                     newGene.set(i, (newGene.get(i).intValue() == new Integer(1) ? new Integer(0) : new Integer(1)));
                 }
             }
-            return new BitChromosome(newGene);
+            List<Chromosome> returnList = new ArrayList<>();
+            returnList.add(new BitChromosome(newGene));
+            return returnList;
         };
     }
+
+    public static FunctionalMutationInterface swapMutation() {
+        return (chromosomeList, mutationRate) -> {
+            final List<Number> newGene = chromosomeList.get(0).getGene();
+            for (int i = 0; i < chromosomeList.get(0).getGene().size(); i++) {
+                if (ThreadLocalRandom.current().nextFloat() < mutationRate) {
+                    Number temp = newGene.get(i);
+                    int random = ThreadLocalRandom.current().nextInt(chromosomeList.get(0).getGene().size());
+                    newGene.set(i, newGene.get(random));
+                    newGene.set(random, temp);
+                }
+            }
+            List<Chromosome> returnList = new ArrayList<>();
+            returnList.add(new BitChromosome(newGene));
+            return returnList;
+        };
+    }
+
 
     public static FunctionalCrossoverInterface twoPointCrossover() {
         return parentChromosomeList -> {
@@ -221,8 +241,8 @@ public class BitPopulation extends Population {
                 generateRandomChromosome(200, 5),
                 tournamentSelectMax(3),
                 onePointCrossover(),
-                flipBitMuation(),
-                evolveToMaxAndReplicate()
+                flipBitMutation(),
+                evolveToMaxAnd10x10Replicate()
         );
     }
 
@@ -244,11 +264,12 @@ public class BitPopulation extends Population {
         final AtomicInteger counter = new AtomicInteger();
 
         return GeneticUtilities.createListOfCoord2DFromRanges(mutationRange, crossoverRange, mutationSteps, crossoverSteps)
-                .stream()
+                .parallelStream()
                 .map((c) -> {
                     double mutationRate = c.x;
                     double crossoverRate = c.y;
                     double generationSum = 0;
+                    double max = 0;
                     for (int i = 0; i < runs; i++) {
                         Population population = new BitPopulation(
                                 null,
@@ -262,14 +283,21 @@ public class BitPopulation extends Population {
                                 mutationInterface,
                                 evolutionInterface);
                         int currentGen = 0;
-                        while (currentGen < maxGenerations && population.getMaxFittest().getFitness() < maxFitness) {
-                            population.evolve();
-                            currentGen++;
+                        while (currentGen < maxGenerations) {
+                            if(population.getMaxFittest().getFitness() < maxFitness) {
+                                population.evolve();
+                                currentGen++;
+                            } else {
+                                break;
+                            }
                         }
+                        double newMax = population.getMaxFittest().getFitness();
+                        max = max > newMax ? max : newMax;
                         generationSum += currentGen;
                     }
-                    System.out.println(counter.addAndGet(1) + ":" + c.x + "/" + c.y + "/" + (float) generationSum / runs);
-
+                    //if((float) generationSum / runs < 3000) {
+                        System.out.println(counter.addAndGet(1) + ":" + c.x + "/" + c.y + "/" + (float) generationSum / runs + " max: " +  max);
+                    //}
                     return new Coord3d(c, (float) generationSum / runs);
                 })
                 .sorted((o1, o2) -> o1.x == o2.x ? (o1.y > o2.y ? 1 : o1.y == o2.y ? 0 : -1) : (o1.x > o2.x ? 1 : -1))

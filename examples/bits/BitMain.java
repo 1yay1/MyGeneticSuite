@@ -1,10 +1,7 @@
 import org.jfree.chart.*;
-import org.jfree.chart.annotations.Annotation;
-import org.jfree.chart.annotations.XYAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.data.Range;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.TextAnchor;
@@ -17,7 +14,6 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 /**
  * Created by yay on 19.10.2016.
@@ -36,7 +32,7 @@ public class BitMain {
         crossoverInterfaceMap.put(1, BitPopulation.twoPointCrossover());
 
         mutationInterfaceMap = new HashMap<>();
-        mutationInterfaceMap.put(0, BitPopulation.flipBitMuation());
+        mutationInterfaceMap.put(0, BitPopulation.flipBitMutation());
 
         selectionInterfaceMap = new HashMap<>();
         selectionInterfaceMap.put(0, chromosomeList -> ThreadLocalRandom.current().nextInt(chromosomeList.size()));
@@ -47,9 +43,9 @@ public class BitMain {
 
         evolutionInterfaceMap = new HashMap<>();
         evolutionInterfaceMap.put(0, Population.evolveToMax());
-        evolutionInterfaceMap.put(0, Population.evolveToMaxAndReplicate());
-
-
+        evolutionInterfaceMap.put(1, Population.evolveToMaxAnd10x10Replicate());
+        evolutionInterfaceMap.put(2, Population.evolveToMaxAndTournamentReplicate(5));
+        evolutionInterfaceMap.put(3, Population.evolveToMaxAndRankBasedReplicate(2));
     }
 
 
@@ -125,7 +121,7 @@ public class BitMain {
                     replicationScheme = Integer.parseInt(args[i + 1]);
                     sb.append("replicationScheme = " + replicationScheme);
                     sb.append("\n");
-                } else if (args[i].toLowerCase().equals("-h") || args[i].toLowerCase().equals("-help")){
+                } else if (args[i].toLowerCase().equals("-h") || args[i].toLowerCase().equals("-help")) {
                     printHelp();
                 } else {
                     printHelp();
@@ -145,69 +141,19 @@ public class BitMain {
         for (int i = 0; i < runs; i++) {
             Population population;
             idList.add(Integer.toString(i));
-            if (replicationScheme == 1) {
-                 population = new BitPopulation(
-                        idList.get(i),
-                        populationSize,
-                        mutationRate,
-                        crossoverRate,
-                        elitismRate,
-                        BitPopulation.generateRandomChromosome(geneSize, setBits),
-                        selectionInterfaceMap.get(selectionFunction),
-                        crossoverInterfaceMap.get(crossoverFunction),
-                        mutationInterfaceMap.get(mutationFunction),
-                         evolutionInterfaceMap.get(replicationScheme)
-                ) {
-                    @Override
-                    public void evolve() {
-                        List<Chromosome> temp = new ArrayList<>();
-                        int i = 0;
+            population = new BitPopulation(
+                    idList.get(i),
+                    populationSize,
+                    mutationRate,
+                    crossoverRate,
+                    elitismRate,
+                    BitPopulation.generateRandomChromosome(geneSize, setBits),
+                    selectionInterfaceMap.get(selectionFunction),
+                    crossoverInterfaceMap.get(crossoverFunction),
+                    mutationInterfaceMap.get(mutationFunction),
+                    evolutionInterfaceMap.get(replicationScheme)
+            );
 
-                        while (i < getPopulationSize()) {
-                            if (ThreadLocalRandom.current().nextFloat() <= getCrossoverRate()) { //crossover?
-                                List<Chromosome> children = getCrossoverInterface().crossover(selectParents());
-                                for (Chromosome c : children) { //add children if there is enough space in new population array
-                                    if (i < getPopulationSize()) {
-                                        temp.add(getMutationInterface().mutate(c, getMutationRate()));
-                                        i++;
-                                    }
-                                }
-                            } else {
-                                temp.add(getMutationInterface().mutate((BitChromosome) getChromosomeList().get(i), getMutationRate()));
-                                i++;
-                            }
-                        }
-                        List<Chromosome> nextGeneration = new ArrayList<>();
-                        Collections.sort(temp);
-                        Collections.reverse(temp);
-                        replicationLoop:
-                        for (; ; ) {
-                            for (Chromosome c : temp) {
-                                for (int k = 0; k < 10; k++) {
-                                    nextGeneration.add(temp.get(k));
-                                    if (nextGeneration.size() == temp.size()) {
-                                        break replicationLoop;
-                                    }
-                                }
-                            }
-                        }
-                        setChromosomeList(nextGeneration);
-                    }
-                };
-            } else {
-                 population = new BitPopulation(
-                        idList.get(i),
-                        populationSize,
-                        mutationRate,
-                        crossoverRate,
-                        elitismRate,
-                        BitPopulation.generateRandomChromosome(geneSize, setBits),
-                        selectionInterfaceMap.get(selectionFunction),
-                        crossoverInterfaceMap.get(crossoverFunction),
-                        mutationInterfaceMap.get(mutationFunction),
-                         evolutionInterfaceMap.get(replicationScheme)
-                );
-            }
             new Thread(new GeneticProducer(maxGenerations, (double) geneSize, population, sharedBlockingQueue)).start();
         }
         Map<String, Integer> idGenerationUntilMaxFitnessMap = new HashMap<>();

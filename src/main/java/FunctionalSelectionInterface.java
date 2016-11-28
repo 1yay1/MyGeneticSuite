@@ -7,4 +7,5 @@ import java.util.List;
 @FunctionalInterface
 public interface FunctionalSelectionInterface {
      int select(List<Chromosome> chromosomeList);
+
 }

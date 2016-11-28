@@ -1,6 +1,5 @@
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.IntStream;
 
 /**
  * Created by yay on 14.10.2016.
@@ -77,8 +76,8 @@ public class SalesmanPopulation extends Population {
 
 
     private static FunctionalMutationInterface defaultMutationInterface() {
-        return (c, mutationRate) -> {
-            List<Number> path = c.getGene();
+        return (chromosomeList, mutationRate) -> {
+            List<Number> path = chromosomeList.get(0).getGene();
             for (int i = 1; i < path.size() - 1; i++) {
                 if (ThreadLocalRandom.current().nextFloat() < mutationRate) {
                     int index1 = i;
@@ -89,7 +88,9 @@ public class SalesmanPopulation extends Population {
 
                 }
             }
-            return c.createChild(path);
+            List<Chromosome> returnList = new ArrayList<>();
+            returnList.add(chromosomeList.get(0).createChild(path));
+            return returnList;
         };
     }
 
